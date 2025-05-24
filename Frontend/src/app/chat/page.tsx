@@ -14,6 +14,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -65,6 +66,7 @@ export default function ChatPage() {
 
   const handleChatSelect = async (chat: ChatRoom) => {
     setActiveChat(chat);
+    setIsLoadingMessages(true);
     try {
       const chatResponse = await fetch(`http://localhost:8000/chat/rooms/${chat.id}`, {
         headers: {
@@ -94,6 +96,8 @@ export default function ChatPage() {
     } catch (error) {
       console.error('Error fetching chat data:', error);
       setMessages([]);
+    } finally {
+      setIsLoadingMessages(false);
     }
   };
 
@@ -108,8 +112,9 @@ export default function ChatPage() {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
         body: JSON.stringify({
-          content,
-          image_url: imageUrl
+          content: content || null,
+          image_url: imageUrl || null,
+          type: imageUrl ? 'image' : 'text'
         })
       });
       
@@ -119,6 +124,21 @@ export default function ChatPage() {
       
       const newMessage = await response.json();
       setMessages(prev => [...prev, newMessage]);
+      
+      // Update chat room's last message
+      setChatRooms(prev => {
+        const index = prev.findIndex(chat => chat.id === activeChat.id);
+        if (index !== -1) {
+          const updated = [...prev];
+          updated[index] = {
+            ...updated[index],
+            last_message: imageUrl ? 'Image' : content,
+            last_message_time: new Date().toISOString()
+          };
+          return updated;
+        }
+        return prev;
+      });
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -143,7 +163,8 @@ export default function ChatPage() {
               <ChatWindow 
                 chat={activeChat} 
                 messages={messages} 
-                onSendMessage={handleSendMessage} 
+                onSendMessage={handleSendMessage}
+                isLoading={isLoadingMessages}
               />
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
