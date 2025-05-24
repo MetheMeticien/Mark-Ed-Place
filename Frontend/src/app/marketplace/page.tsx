@@ -101,9 +101,26 @@ export default function MarketplacePage() {
         <p className="mb-6 text-lg text-muted-foreground">
           Buy and sell academic resources, equipment, and more with fellow students
         </p>
-        <div className="flex justify-center gap-4">
+        <div className="flex flex-col md:flex-row justify-center gap-4">
           <Button size="lg">Browse Products</Button>
           <Button size="lg" variant="outline">Sell Your Items</Button>
+        </div>
+      </section>
+
+      {/* University Marketplace Section */}
+      <section className="mb-12 rounded-lg border p-6 md:p-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">University Marketplace</h2>
+            <p className="text-muted-foreground">
+              Find products from students at your university. Connect with peers and discover resources specific to your campus.
+            </p>
+          </div>
+          <Link href={ROUTES.UNIVERSITY_MARKETPLACE}>
+            <Button size="lg" className="whitespace-nowrap">
+              Go to University Marketplace
+            </Button>
+          </Link>
         </div>
       </section>
 

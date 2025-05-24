@@ -32,6 +32,7 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   MARKETPLACE: '/marketplace',
   PRODUCT: '/marketplace/product',
+  UNIVERSITY_MARKETPLACE: '/marketplace/university',
   PROFILE: '/profile',
   UNAUTHORIZED: '/unauthorized',
   NOT_FOUND: '/404',

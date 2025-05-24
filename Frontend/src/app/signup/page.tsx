@@ -173,22 +173,61 @@ export default function SignupPage() {
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="name@example.com"
-                        type="email"
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        autoCorrect="off"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field: { onChange, value, ...fieldProps } }) => {
+                  // Split the email into username and domain parts
+                  const [username = "", domain = ""] = value.split("@");
+                  
+                  // Handle changes to the username part
+                  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                    const newUsername = e.target.value;
+                    onChange(`${newUsername}@${domain}`);
+                  };
+                  
+                  // Handle changes to the domain part
+                  const handleDomainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+                    const newDomain = e.target.value;
+                    onChange(`${username}@${newDomain}`);
+                  };
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <div className="flex items-center space-x-1">
+                        <FormControl>
+                          <Input
+                            placeholder="username"
+                            type="text"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            value={username}
+                            onChange={handleUsernameChange}
+                            className="rounded-r-none"
+                            {...fieldProps}
+                          />
+                        </FormControl>
+                        <span className="px-2 py-2 border border-input bg-muted">@</span>
+                        <FormControl>
+                          <select
+                            className="flex h-10 w-full rounded-l-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={domain}
+                            onChange={handleDomainChange}
+                          >
+                            <option value="">Select university</option>
+                            <option value="harvard.edu">harvard.edu</option>
+                            <option value="mit.edu">mit.edu</option>
+                            <option value="stanford.edu">stanford.edu</option>
+                            <option value="yale.edu">yale.edu</option>
+                            <option value="princeton.edu">princeton.edu</option>
+                            <option value="berkeley.edu">berkeley.edu</option>
+                            <option value="oxford.ac.uk">oxford.ac.uk</option>
+                            <option value="cambridge.ac.uk">cambridge.ac.uk</option>
+                          </select>
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
@@ -355,6 +394,24 @@ export default function SignupPage() {
             GitHub
           </Button>
         </div>
+
+        <p className="px-8 text-center text-sm text-muted-foreground">
+          By clicking continue, you agree to our{' '}
+          <Link
+            href="/terms"
+            className="underline underline-offset-4 hover:text-primary"
+          >
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link
+            href="/privacy"
+            className="underline underline-offset-4 hover:text-primary"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
 
         <p className="px-8 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
