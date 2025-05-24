@@ -8,6 +8,7 @@ export interface User {
   gender?: string;
   role?: string;
   image?: string;
+  university_id?: string;
   createdAt?: string;
   updatedAt?: string;
 }
