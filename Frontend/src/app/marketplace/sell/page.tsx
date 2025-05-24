@@ -42,7 +42,7 @@ const productSchema = z.object({
   category: z.string().min(1, { message: 'Please select a category' }),
   condition: z.string().min(1, { message: 'Please select a condition' }),
   location: z.string().min(3, { message: 'Location must be at least 3 characters' }),
-  visibility: z.enum(['all', 'university', 'private'], {
+  visibility: z.enum(['all', 'university_only'], {
     required_error: 'Please select a visibility option',
   }),
   stock: z.coerce.number().int().positive({ message: 'Stock must be a positive integer' }),
@@ -70,8 +70,7 @@ const CONDITIONS = [
 
 const VISIBILITY_OPTIONS = [
   { value: 'all', label: 'Everyone' },
-  { value: 'university', label: 'My University Only' },
-  { value: 'private', label: 'Private (Only visible to me)' },
+  { value: 'university_only', label: 'My University Only' },
 ];
 
 export default function SellItemPage() {

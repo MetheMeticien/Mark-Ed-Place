@@ -17,8 +17,7 @@ const FALLBACK_IMAGE = 'https://placehold.co/300x200/e2e8f0/1e293b?text=No+Image
 
 export default function CartPage() {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, clearCart, totalItems, totalPrice } = useCart();
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const { items, removeItem, updateQuantity, clearCart, checkout, isCheckingOut, totalItems, totalPrice } = useCart();
 
   const handleQuantityChange = (productId: string, newQuantity: string) => {
     const quantity = parseInt(newQuantity, 10);
@@ -42,18 +41,11 @@ export default function CartPage() {
     }
   };
 
-  const handleCheckout = () => {
-    setIsCheckingOut(true);
-    // Simulate checkout process
-    setTimeout(() => {
-      toast({
-        title: 'Order placed successfully!',
-        description: 'Your order has been placed and will be processed soon.',
-      });
-      clearCart();
+  const handleCheckout = async () => {
+    const success = await checkout();
+    if (success) {
       router.push(ROUTES.MARKETPLACE);
-      setIsCheckingOut(false);
-    }, 2000);
+    }
   };
 
   return (
