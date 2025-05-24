@@ -15,6 +15,13 @@ export const API_CONFIG = {
       UPDATE_PROFILE: '/users/me',
       CHANGE_PASSWORD: '/users/change-password',
     },
+    PRODUCTS: {
+      ALL: '/products/',
+      GET: '/products/:id',
+      CREATE: '/products/',
+      UPDATE: '/products/:id',
+      DELETE: '/products/:id',
+    },
     UNIVERSITIES: {
       ALL: '/universities',
       ADD: '/universities',

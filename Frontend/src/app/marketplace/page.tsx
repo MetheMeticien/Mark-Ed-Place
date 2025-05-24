@@ -103,7 +103,9 @@ export default function MarketplacePage() {
         </p>
         <div className="flex flex-col md:flex-row justify-center gap-4">
           <Button size="lg">Browse Products</Button>
-          <Button size="lg" variant="outline">Sell Your Items</Button>
+          <Link href={`${ROUTES.MARKETPLACE}/sell`}>
+            <Button size="lg" variant="outline">Sell Your Items</Button>
+          </Link>
         </div>
       </section>
 
