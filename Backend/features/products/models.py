@@ -10,7 +10,7 @@ class ProductVisibility(str, enum.Enum):
     UNIVERSITY_ONLY = "university_only"
 
 class University(Base):
-    __tablename__ = 'universities'
+    __tablename__= 'universities'
 
     id = Column(String, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)

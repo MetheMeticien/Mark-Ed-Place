@@ -62,3 +62,13 @@ def get_user_by_id(user_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+
+@router.get("/user/username/{username}", response_model=schemas.UserRead)
+def get_user_by_username(username: str, db: Session = Depends(get_db)):
+    """Get a user by their ID"""
+    print(username)
+    user = crud.get_user_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+

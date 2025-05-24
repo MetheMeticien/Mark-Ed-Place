@@ -1,5 +1,5 @@
 fastapi
-uvicorn 
+uvicorn[standard]
 sqlalchemy 
 psycopg2-binary 
 passlib[bcrypt] 
@@ -11,4 +11,4 @@ python-multipart
 alembic
 python-dotenv
 psycopg2-binary
-
+firebase-admin
