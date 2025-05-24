@@ -2,15 +2,18 @@
 
 import Link from 'next/link';
 import { useAuthContext } from '../providers/auth-provider';
+import { useCart } from '../providers/cart-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ROUTES } from '@/config/config';
 import { ShoppingCart, User, Search } from 'lucide-react';
 import { useState } from 'react';
 import { ModeToggle } from '@/components/mode-toggle';
+import { Badge } from '@/components/ui/badge';
 
 export function MarketplaceNavbar() {
   const { user, logout } = useAuthContext();
+  const { totalItems } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
@@ -48,8 +51,16 @@ export function MarketplaceNavbar() {
             </Button>
           </Link>
           <Link href="/marketplace/cart">
-            <Button variant="ghost" size="icon" aria-label="Cart">
+            <Button variant="ghost" size="icon" aria-label="Cart" className="relative">
               <ShoppingCart className="h-5 w-5" />
+              {totalItems > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
+                >
+                  {totalItems}
+                </Badge>
+              )}
             </Button>
           </Link>
           <ModeToggle />

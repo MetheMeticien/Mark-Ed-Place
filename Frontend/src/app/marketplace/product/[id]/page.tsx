@@ -10,6 +10,7 @@ import { ArrowLeft, ShoppingCart, Heart, MapPin } from 'lucide-react';
 import { productApi, Product } from '@/lib/product-api';
 import { toast } from '@/components/ui/use-toast';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { useCart } from '@/components/providers/cart-provider';
 // Fallback image for products without images
 const FALLBACK_IMAGE = 'https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image';
 
@@ -152,10 +153,17 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     );
   }
 
+  const { addItem } = useCart();
+  
   const handleAddToCart = () => {
-    // Implement add to cart functionality
-    console.log(`Added ${quantity} of ${product.title} to cart`);
-    // Show success message or redirect to cart
+    if (!product) return;
+    
+    addItem(product, quantity);
+    
+    toast({
+      title: 'Added to cart',
+      description: `${quantity} × ${product.title} added to your cart`,
+    });
   };
 
   const handleContactSeller = () => {

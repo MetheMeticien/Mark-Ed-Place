@@ -17,6 +17,8 @@ class University(Base):
     email = Column(String, unique=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     # Relationships
     products = relationship("Product", back_populates="university")

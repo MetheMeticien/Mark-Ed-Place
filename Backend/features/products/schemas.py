@@ -7,6 +7,8 @@ from .models import ProductVisibility
 class UniversityBase(BaseModel):
     name: str
     email: str
+    latitude: Optional[float]
+    longitude: Optional[float]
 
 class UniversityCreate(UniversityBase):
     pass
@@ -15,6 +17,8 @@ class UniversityRead(UniversityBase):
     id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+    latitude: Optional[float]
+    longitude: Optional[float]
 
     class Config:
         from_attributes = True
