@@ -28,7 +28,10 @@ class ProductBase(BaseModel):
     location: str
     university_id: str
     visibility: ProductVisibility = ProductVisibility.ALL
-    image: Optional[str] = None
+    image: Optional[list[str]] = None
+    stock: int
+    avg_rating: Optional[float] = None
+    num_of_ratings: Optional[int] = None
 
 class ProductCreate(ProductBase):
     pass
@@ -42,7 +45,10 @@ class ProductUpdate(BaseModel):
     location: Optional[str] = None
     university_id: Optional[str] = None
     visibility: Optional[ProductVisibility] = None
-    image: Optional[str] = None
+    image: Optional[list[str]] = None
+    stock: Optional[int] = None
+    avg_rating: Optional[float] = None
+    num_of_ratings: Optional[int] = None
 
 class ProductRead(ProductBase):
     id: str
@@ -50,6 +56,10 @@ class ProductRead(ProductBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     university: UniversityRead
+    stock: int
+    avg_rating: Optional[float] = None
+    num_of_ratings: Optional[int] = None
+    image: Optional[list[str]] = None
 
     class Config:
         from_attributes = True
