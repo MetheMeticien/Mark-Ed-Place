@@ -30,9 +30,9 @@ import { productApi, CreateProductRequest } from '@/lib/product-api';
 import { toast } from '@/components/ui/use-toast';
 
 // Cloudinary configuration
-const CLOUDINARY_UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET || '';
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_UPLOAD_URL = process.env.CLOUDINARY_UPLOAD_URL;
+const CLOUDINARY_UPLOAD_PRESET = 'mark-ed-place';
+const CLOUDINARY_CLOUD_NAME = 'du2tvwrgx';
+const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/du2tvwrgx/image/upload';
 
 // Form schema
 const productSchema = z.object({
