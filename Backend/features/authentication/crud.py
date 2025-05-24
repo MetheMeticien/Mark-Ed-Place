@@ -39,3 +39,16 @@ def authenticate_user(db: Session, email: str, password: str):
     if not pwd_context.verify(password, user.hashed_password):
         return None
     return user
+
+
+def update_user_role(db: Session, user_id: str, role: models.Role):
+    user = get_user_by_id(db, user_id)
+    if user:
+        user.role = role
+        db.commit()
+        db.refresh(user)
+    return user
+
+def get_all_users(db: Session):
+    """Get all users from the database"""
+    return db.query(models.User).all()

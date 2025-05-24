@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from . import crud
 from database import get_db
 from config import settings
+from features.authentication.models import Role
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -28,12 +29,20 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        phone_no: str = payload.get("sub")
-        if phone_no is None:
+        email: str = payload.get("sub")
+        if email is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = crud.get_user_by_phone_no(db, phone_no)
+    user = crud.get_user_by_email(db, email=email)
     if user is None:
         raise credentials_exception
-    return user 
+    return user
+
+async def get_admin_user(current_user = Depends(get_current_user)):
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    return current_user 
