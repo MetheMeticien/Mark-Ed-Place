@@ -20,7 +20,7 @@ export default function ChatPage() {
     if (user) {
       fetchChatRooms();
       
-      const userWs = new WebSocket(`ws://localhost:8000/chat/ws/user/${user.id}`);
+      const userWs = new WebSocket(`ws://${process.env.NEXT_PUBLIC_SERVER_URL}/chat/ws/user/${user.id}`);
       userWs.onmessage = (event) => {
         const update = JSON.parse(event.data);
         setChatRooms(prev => {
@@ -44,7 +44,7 @@ export default function ChatPage() {
   const fetchChatRooms = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/chat/rooms', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/chat/rooms`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -68,7 +68,7 @@ export default function ChatPage() {
     setActiveChat(chat);
     setIsLoadingMessages(true);
     try {
-      const chatResponse = await fetch(`http://localhost:8000/chat/rooms/${chat.id}`, {
+      const chatResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/chat/rooms/${chat.id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -81,7 +81,7 @@ export default function ChatPage() {
       const chatData = await chatResponse.json();
       setActiveChat(chatData);
 
-      const messagesResponse = await fetch(`http://localhost:8000/chat/rooms/${chat.id}/messages?limit=50`, {
+      const messagesResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/chat/rooms/${chat.id}/messages?limit=50`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -105,7 +105,7 @@ export default function ChatPage() {
     if (!activeChat) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/chat/rooms/${activeChat.id}/messages`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/chat/rooms/${activeChat.id}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -94,7 +94,7 @@ export default function SignupPage() {
     const fetchUniversities = async () => {
       setIsLoadingUniversities(true);
       try {
-        const response = await fetch('http://localhost:8000/universities');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/universities`);
         if (!response.ok) {
           throw new Error('Failed to fetch universities');
         }

@@ -75,7 +75,7 @@ export default function Home() {
       <header className="fixed left-0 right-0 top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
         <div className="container flex h-16 items-center justify-between">
           <Link href="/" className="text-xl font-bold">
-            CodeRush
+            MARK-ED-PLACE
           </Link>
           <nav className="hidden md:flex items-center space-x-6">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -111,10 +111,10 @@ export default function Home() {
             className="mx-auto max-w-4xl"
           >
             <h1 className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent sm:text-6xl md:text-7xl">
-              Build your next big thing with CodeRush
+              Your Reliable Student MarketPlace
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              A modern development platform that helps you build, deploy, and manage your applications with ease.
+              A modern student marketplace that helps you buy, sell, and trade your items with ease.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button size="lg" className="glow-border" asChild>

@@ -30,7 +30,7 @@ export default function ChatWindow({ chat, messages, onSendMessage, isLoading = 
 
   useEffect(() => {
     // Set up WebSocket connection for this chat
-    const chatWs = new WebSocket(`ws://localhost:8000/chat/ws/${chat.id}`);
+    const chatWs = new WebSocket(`ws://${process.env.NEXT_PUBLIC_SERVER_URL}/chat/ws/${chat.id}`);
     chatWs.onmessage = (event) => {
       const newMessage = JSON.parse(event.data);
       // Handle new message
