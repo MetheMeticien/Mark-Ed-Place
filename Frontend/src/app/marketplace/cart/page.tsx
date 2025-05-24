@@ -23,7 +23,22 @@ export default function CartPage() {
   const handleQuantityChange = (productId: string, newQuantity: string) => {
     const quantity = parseInt(newQuantity, 10);
     if (!isNaN(quantity) && quantity > 0) {
-      updateQuantity(productId, quantity);
+      // Find the item to get its stock
+      const item = items.find(item => item.product.id === productId);
+      if (item) {
+        // Check if requested quantity exceeds stock
+        if (quantity > item.product.stock) {
+          toast({
+            title: 'Limited stock',
+            description: `Only ${item.product.stock} items available.`,
+            variant: 'destructive',
+          });
+          // Update to maximum available stock instead
+          updateQuantity(productId, item.product.stock);
+        } else {
+          updateQuantity(productId, quantity);
+        }
+      }
     }
   };
 
@@ -113,6 +128,7 @@ export default function CartPage() {
                             <Input
                               type="number"
                               min="1"
+                              max={item.product.stock}
                               value={item.quantity}
                               onChange={(e) =>
                                 handleQuantityChange(

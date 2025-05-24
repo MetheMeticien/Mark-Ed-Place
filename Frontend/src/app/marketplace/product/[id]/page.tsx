@@ -158,12 +158,34 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const handleAddToCart = () => {
     if (!product) return;
     
-    addItem(product, quantity);
+    // Check if product is in stock
+    if (product.stock <= 0) {
+      toast({
+        title: 'Out of stock',
+        description: `${product.title} is currently out of stock`,
+        variant: 'destructive',
+      });
+      return;
+    }
     
-    toast({
-      title: 'Added to cart',
-      description: `${quantity} × ${product.title} added to your cart`,
-    });
+    // Check if requested quantity is available
+    if (quantity > product.stock) {
+      toast({
+        title: 'Limited stock',
+        description: `Only ${product.stock} items available. Please reduce your quantity.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Add to cart - the addItem function will handle additional stock checks
+    const success = addItem(product, quantity);
+    
+    // If successfully added, show a success message (though this is now redundant as the cart provider shows a toast)
+    if (success) {
+      // Optional: You could navigate to the cart page here
+      // router.push('/marketplace/cart');
+    }
   };
 
   const handleContactSeller = () => {

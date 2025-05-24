@@ -11,7 +11,7 @@ export interface CartItem {
 
 export interface CartContextType {
   items: CartItem[];
-  addItem: (product: Product, quantity: number) => void;
+  addItem: (product: Product, quantity: number) => boolean;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -45,18 +45,40 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
   
   const addItem = (product: Product, quantity: number) => {
+    // Check if product is in stock
+    if (product.stock <= 0) {
+      toast({
+        title: 'Out of stock',
+        description: `${product.title} is currently out of stock`,
+        variant: 'destructive',
+      });
+      return false;
+    }
+    
     setItems(prevItems => {
       // Check if product already exists in cart
       const existingItemIndex = prevItems.findIndex(item => item.product.id === product.id);
       
       if (existingItemIndex >= 0) {
-        // Update quantity if product already exists
+        // Check if adding more would exceed available stock
+        const newQuantity = prevItems[existingItemIndex].quantity + quantity;
+        
+        if (newQuantity > product.stock) {
+          toast({
+            title: 'Limited stock',
+            description: `Only ${product.stock} items available. You already have ${prevItems[existingItemIndex].quantity} in your cart.`,
+            variant: 'destructive',
+          });
+          return prevItems;
+        }
+        
+        // Update quantity if product already exists and stock is sufficient
         const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex].quantity += quantity;
+        updatedItems[existingItemIndex].quantity = newQuantity;
         
         toast({
           title: 'Cart updated',
-          description: `${product.title} quantity updated to ${updatedItems[existingItemIndex].quantity}`,
+          description: `${product.title} quantity updated to ${newQuantity}`,
         });
         
         return updatedItems;
@@ -70,6 +92,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return [...prevItems, { product, quantity }];
       }
     });
+    
+    return true;
   };
   
   const removeItem = (productId: string) => {
