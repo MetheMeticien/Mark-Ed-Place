@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ROUTES } from '@/config/config';
 import { productApi, Product } from '@/lib/product-api';
 import { toast } from '@/components/ui/use-toast';
+import { useAuthContext } from '@/components/providers/auth-provider';
 // Fallback image for products without images
 const FALLBACK_IMAGE = 'https://placehold.co/300x200/e2e8f0/1e293b?text=No+Image';
 
@@ -15,6 +16,7 @@ const FALLBACK_IMAGE = 'https://placehold.co/300x200/e2e8f0/1e293b?text=No+Image
 const CATEGORIES = ['All', 'Books', 'Equipment', 'Accessories', 'Supplies', 'Electronics', 'Clothing', 'Furniture', 'Other'];
 
 export default function MarketplacePage() {
+  const { user, isAuthenticated } = useAuthContext();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
@@ -78,11 +80,17 @@ export default function MarketplacePage() {
               Find products from students at your university. Connect with peers and discover resources specific to your campus.
             </p>
           </div>
-          <Link href={ROUTES.UNIVERSITY_MARKETPLACE}>
-            <Button size="lg" className="whitespace-nowrap">
-              Go to University Marketplace
+          {isAuthenticated && user?.university_id ? (
+            <Link href={`${ROUTES.UNIVERSITY_MARKETPLACE}?university_id=${user.university_id}`}>
+              <Button size="lg" className="whitespace-nowrap">
+                Go to University Marketplace
+              </Button>
+            </Link>
+          ) : (
+            <Button size="lg" className="whitespace-nowrap" disabled>
+              University Access Unavailable
             </Button>
-          </Link>
+          )}
         </div>
       </section>
 

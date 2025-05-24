@@ -4,12 +4,13 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/providers/auth-provider';
+import { CartProvider } from '@/components/providers/cart-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'CodeRush - Modern Web Development',
-  description: 'A modern web application with Next.js, TypeScript, and Tailwind CSS',
+  title: 'Mark-Ed-Place - University Marketplace',
+  description: 'A marketplace for university students to buy and sell products',
 };
 
 export default function RootLayout({
@@ -27,8 +28,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
-            <Toaster />
+            <CartProvider>
+              {children}
+              <Toaster />
+            </CartProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

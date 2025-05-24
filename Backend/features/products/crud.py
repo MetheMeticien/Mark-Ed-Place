@@ -98,3 +98,79 @@ def delete_product(db: Session, product_id: str):
 
 def get_seller_products(db: Session, seller_id: str):
     return db.query(models.Product).filter(models.Product.seller_id == seller_id).all() 
+
+# Order CRUD operations
+def create_order(db: Session, order: schemas.OrderCreate, buyer_id: str):
+    # Verify product exists and has enough stock
+    product = get_product(db, order.product_id)
+    if not product:
+        raise ValueError("Product not found")
+    
+    if product.stock < order.quantity:
+        raise ValueError(f"Not enough stock available. Available: {product.stock}, Requested: {order.quantity}")
+    
+    # Create the order
+    db_order = models.Order(
+        id=str(uuid.uuid4()),
+        buyer_id=buyer_id,
+        **order.model_dump()
+    )
+    
+    # Update product stock
+    product.stock -= order.quantity
+    
+    db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+    return db_order
+
+def get_order(db: Session, order_id: str):
+    return db.query(models.Order).filter(models.Order.id == order_id).first()
+
+def get_orders(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Order).offset(skip).limit(limit).all()
+
+def get_buyer_orders(db: Session, buyer_id: str):
+    return db.query(models.Order).filter(models.Order.buyer_id == buyer_id).all()
+
+def get_seller_orders(db: Session, seller_id: str):
+    return db.query(models.Order).filter(models.Order.seller_id == seller_id).all()
+
+def update_order(db: Session, order_id: str, order: schemas.OrderUpdate):
+    db_order = get_order(db, order_id)
+    if db_order:
+        # Get the current quantity
+        current_quantity = db_order.quantity
+        
+        # Update the order with new data
+        update_data = order.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_order, key, value)
+        
+        # If quantity changed, update product stock accordingly
+        if 'quantity' in update_data and update_data['quantity'] != current_quantity:
+            product = get_product(db, db_order.product_id)
+            quantity_diff = current_quantity - update_data['quantity']
+            
+            # If increasing order quantity, check if enough stock
+            if quantity_diff < 0 and abs(quantity_diff) > product.stock:
+                raise ValueError(f"Not enough stock available. Available: {product.stock}, Additional needed: {abs(quantity_diff)}")
+            
+            # Update product stock
+            product.stock += quantity_diff
+        
+        db.commit()
+        db.refresh(db_order)
+    return db_order
+
+def delete_order(db: Session, order_id: str):
+    db_order = get_order(db, order_id)
+    if db_order:
+        # Restore product stock
+        product = get_product(db, db_order.product_id)
+        if product:
+            product.stock += db_order.quantity
+        
+        db.delete(db_order)
+        db.commit()
+    return db_order

@@ -17,6 +17,8 @@ class University(Base):
     email = Column(String, unique=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
 
     # Relationships
     products = relationship("Product", back_populates="university")
@@ -45,3 +47,20 @@ class Product(Base):
     # Relationships
     seller = relationship("User", back_populates="products")
     university = relationship("University", back_populates="products")
+    orders = relationship("Order", back_populates="product")
+
+class Order(Base):
+    __tablename__ = 'orders'
+
+    id = Column(String, primary_key=True, index=True)
+    product_id = Column(String, ForeignKey('products.id'), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    buyer_id = Column(String, ForeignKey('users.id'), nullable=False)
+    seller_id = Column(String, ForeignKey('users.id'), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    product = relationship("Product", back_populates="orders")
+    buyer = relationship("User", foreign_keys=[buyer_id], backref="purchases")
+    seller = relationship("User", foreign_keys=[seller_id], backref="sales")

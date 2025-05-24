@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
 import { ROUTES, ROLES } from '@/config/config';
 import { userApi, productApi } from '@/lib/api-client';
+import { orderApi, Order } from '@/lib/order-api';
 import { toast } from '@/components/ui/use-toast';
 import { Edit, Package, ShieldCheck, ShoppingCart, User as UserIcon } from 'lucide-react';
 import { Product } from '@/types/api';
@@ -62,46 +63,8 @@ const MOCK_LISTINGS = [
   }
 ];
 
-// Mock data for user orders
-const MOCK_ORDERS = [
-  {
-    id: 'ord-001',
-    items: [
-      {
-        id: '201',
-        title: 'Physics Textbook',
-        price: 32.50,
-        quantity: 1,
-        image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Physics+Book'
-      }
-    ],
-    total: 32.50,
-    status: 'delivered',
-    date: '2025-05-10'
-  },
-  {
-    id: 'ord-002',
-    items: [
-      {
-        id: '202',
-        title: 'Laptop Stand',
-        price: 24.99,
-        quantity: 1,
-        image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Laptop+Stand'
-      },
-      {
-        id: '203',
-        title: 'Wireless Mouse',
-        price: 19.99,
-        quantity: 1,
-        image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Mouse'
-      }
-    ],
-    total: 44.98,
-    status: 'processing',
-    date: '2025-05-20'
-  }
-];
+// Fallback image for products without images
+const FALLBACK_IMAGE = 'https://placehold.co/300x200/e2e8f0/1e293b?text=No+Image';
 
 export default function ProfilePage() {
   const { user } = useAuthContext();
@@ -119,6 +82,13 @@ export default function ProfilePage() {
   const [userProducts, setUserProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [productsError, setProductsError] = useState<string | null>(null);
+  
+  // Order states
+  const [purchases, setPurchases] = useState<Order[]>([]);
+  const [sales, setSales] = useState<Order[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [activeOrderTab, setActiveOrderTab] = useState<'purchases' | 'sales'>('purchases');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -189,31 +159,87 @@ export default function ProfilePage() {
     }
   };
 
-  // Fetch user's products when component mounts and user is authenticated
-  useEffect(() => {
-    const fetchUserProducts = async () => {
-      if (!user?.id) return;
-      
-      try {
-        setIsLoadingProducts(true);
-        setProductsError(null);
-        
+  const fetchUserProducts = async () => {
+    setIsLoadingProducts(true);
+    setProductsError(null);
+    
+    try {
+      if (user?.id) {
         const response = await productApi.getSellerProducts(user.id);
-        
         if (response.success && response.data) {
           setUserProducts(response.data);
         } else {
-          setProductsError(response.error?.message || 'Failed to fetch your listings');
+          setProductsError(response.error?.message || 'Failed to load products');
         }
-      } catch (error) {
-        console.error('Error fetching user products:', error);
-        setProductsError(error instanceof Error ? error.message : 'An error occurred while fetching your listings');
-      } finally {
-        setIsLoadingProducts(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching user products:', error);
+      setProductsError('An error occurred while fetching your products');
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
 
+  const fetchUserOrders = async () => {
+    setIsLoadingOrders(true);
+    setOrdersError(null);
+    
+    try {
+      // Fetch purchases
+      const purchasesResponse = await orderApi.getMyPurchases();
+      if (purchasesResponse.success && purchasesResponse.data) {
+        setPurchases(purchasesResponse.data);
+      } else {
+        setOrdersError(purchasesResponse.error?.message || 'Failed to load purchases');
+      }
+
+      // Fetch sales
+      const salesResponse = await orderApi.getMySales();
+      if (salesResponse.success && salesResponse.data) {
+        setSales(salesResponse.data);
+      } else {
+        setOrdersError(salesResponse.error?.message || 'Failed to load sales');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      setOrdersError('An error occurred while fetching your orders');
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      const response = await orderApi.cancelOrder(orderId);
+      if (response.success) {
+        toast({
+          title: 'Order cancelled',
+          description: 'Your order has been cancelled successfully.',
+        });
+        // Update the purchases list
+        setPurchases(purchases.filter(order => order.id !== orderId));
+      } else {
+        toast({
+          title: 'Error',
+          description: response.error?.message || 'Failed to cancel order',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to cancel order. Please try again later.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!user?.id) return;
+    
     fetchUserProducts();
+    fetchUserOrders();
   }, [user?.id]);
 
   return (
@@ -469,70 +495,187 @@ export default function ProfilePage() {
             {/* My Orders Tab */}
             <TabsContent value="orders" className="mt-6">
               <h3 className="mb-4 text-xl font-semibold">My Orders</h3>
-              {/* Orders content */}
-              {MOCK_ORDERS.length > 0 ? (
-                <div className="space-y-4">
-                  {MOCK_ORDERS.map(order => (
-                    <Card key={order.id}>
-                      <CardContent className="p-4">
-                        <div className="mb-4 flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Order #{order.id}</p>
-                            <p className="text-sm text-muted-foreground">Placed on {order.date}</p>
-                          </div>
-                          <div className={`rounded-full px-3 py-1 text-xs font-medium ${
-                            order.status === 'delivered' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-3">
-                          {order.items.map(item => (
-                            <div key={item.id} className="flex items-center gap-3">
-                              <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                                <img
-                                  src={item.image}
-                                  alt={item.title}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="font-medium">{item.title}</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Qty: {item.quantity} × ${item.price.toFixed(2)}
-                                </p>
+              
+              <Tabs
+                defaultValue="purchases"
+                value={activeOrderTab}
+                onValueChange={(value) => setActiveOrderTab(value as 'purchases' | 'sales')}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="purchases" className="flex items-center">
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    My Purchases
+                  </TabsTrigger>
+                  <TabsTrigger value="sales" className="flex items-center">
+                    <Package className="mr-2 h-4 w-4" />
+                    My Sales
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Purchases Tab */}
+                <TabsContent value="purchases" className="mt-6">
+                  {isLoadingOrders ? (
+                    <div className="flex justify-center py-8">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                        <p className="mt-4 text-muted-foreground">Loading your purchases...</p>
+                      </div>
+                    </div>
+                  ) : purchases.length === 0 ? (
+                    <div className="rounded-lg border border-dashed p-8 text-center">
+                      <ShoppingCart className="h-16 w-16 mx-auto text-muted-foreground" />
+                      <h4 className="mt-4 text-lg font-medium">No Purchases Yet</h4>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        You haven't made any purchases yet.
+                      </p>
+                      <Button 
+                        className="mt-4"
+                        onClick={() => router.push(ROUTES.MARKETPLACE)}
+                      >
+                        Browse Marketplace
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {purchases.map((order) => (
+                        <Card key={order.id}>
+                          <CardContent className="p-4">
+                            <div className="mb-4 flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Order #{order.id.substring(0, 8)}</p>
+                                <p className="text-sm text-muted-foreground">Placed on {formatDate(order.created_at)}</p>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                        
-                        <div className="mt-4 border-t pt-4 text-right">
-                          <p className="font-medium">Total: ${order.total.toFixed(2)}</p>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="border-t p-4">
-                        <Button variant="outline" size="sm" className="ml-auto">
-                          View Order Details
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed p-8 text-center">
-                  <h4 className="text-lg font-medium">No Orders Yet</h4>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    You haven't placed any orders yet.
-                  </p>
-                  <Button 
-                    className="mt-4"
-                    onClick={() => router.push(ROUTES.MARKETPLACE)}
-                  >
-                    Browse Marketplace
-                  </Button>
-                </div>
-              )}
+                            
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-3">
+                                <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
+                                  <img
+                                    src={order.product?.image && order.product.image.length > 0 
+                                      ? order.product.image[0] 
+                                      : FALLBACK_IMAGE}
+                                    alt={order.product?.title || 'Product'}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-medium">{order.product?.title || 'Product'}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    Qty: {order.quantity} × ${order.product?.price?.toFixed(2) || '0.00'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4 border-t pt-4 text-right">
+                              <p className="font-medium">
+                                Total: ${order.product?.price ? (order.product.price * order.quantity).toFixed(2) : '0.00'}
+                              </p>
+                            </div>
+                          </CardContent>
+                          <CardFooter className="border-t p-4 flex justify-between">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => router.push(`${ROUTES.PRODUCT}/${order.product_id}`)}
+                            >
+                              View Product
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleCancelOrder(order.id)}
+                            >
+                              Cancel Order
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Sales Tab */}
+                <TabsContent value="sales" className="mt-6">
+                  {isLoadingOrders ? (
+                    <div className="flex justify-center py-8">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                        <p className="mt-4 text-muted-foreground">Loading your sales...</p>
+                      </div>
+                    </div>
+                  ) : sales.length === 0 ? (
+                    <div className="rounded-lg border border-dashed p-8 text-center">
+                      <Package className="h-16 w-16 mx-auto text-muted-foreground" />
+                      <h4 className="mt-4 text-lg font-medium">No Sales Yet</h4>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        You haven't sold any products yet.
+                      </p>
+                      <Button 
+                        className="mt-4"
+                        onClick={() => router.push(`${ROUTES.MARKETPLACE}/sell`)}
+                      >
+                        List Something for Sale
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {sales.map((order) => (
+                        <Card key={order.id}>
+                          <CardContent className="p-4">
+                            <div className="mb-4 flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Order #{order.id.substring(0, 8)}</p>
+                                <p className="text-sm text-muted-foreground">Sold on {formatDate(order.created_at)}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-3">
+                                <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
+                                  <img
+                                    src={order.product?.image && order.product.image.length > 0 
+                                      ? order.product.image[0] 
+                                      : FALLBACK_IMAGE}
+                                    alt={order.product?.title || 'Product'}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-medium">{order.product?.title || 'Product'}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    Qty: {order.quantity} × ${order.product?.price?.toFixed(2) || '0.00'}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    <span className="font-medium">Buyer ID:</span> {order.buyer_id.substring(0, 8)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4 border-t pt-4 text-right">
+                              <p className="font-medium">
+                                Total: ${order.product?.price ? (order.product.price * order.quantity).toFixed(2) : '0.00'}
+                              </p>
+                            </div>
+                          </CardContent>
+                          <CardFooter className="border-t p-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="ml-auto"
+                              onClick={() => router.push(`${ROUTES.PRODUCT}/${order.product_id}`)}
+                            >
+                              View Product
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </TabsContent>
           </Tabs>
         </div>

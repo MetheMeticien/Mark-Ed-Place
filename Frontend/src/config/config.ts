@@ -22,6 +22,15 @@ export const API_CONFIG = {
       UPDATE: '/products/:id',
       DELETE: '/products/:id',
     },
+    ORDERS: {
+      ALL: '/orders/',
+      CREATE: '/orders/',
+      MY_PURCHASES: '/orders/me/purchases',
+      MY_SALES: '/orders/me/sales',
+      GET: '/orders/:id',
+      UPDATE: '/orders/:id',
+      CANCEL: '/orders/:id',
+    },
     UNIVERSITIES: {
       ALL: '/universities',
       ADD: '/universities',

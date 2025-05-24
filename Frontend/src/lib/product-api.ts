@@ -10,11 +10,12 @@ export interface Product {
   condition: string;
   location: string;
   university_id: string;
-  visibility: 'all' | 'university' | 'private';
+  visibility: 'all' | 'university_only';
   image: string[];
   stock: number;
   avg_rating: number;
   num_of_ratings: number;
+  seller_id: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -27,7 +28,7 @@ export interface CreateProductRequest {
   condition: string;
   location: string;
   university_id: string;
-  visibility: 'all' | 'university' | 'private';
+  visibility: 'all' | 'university_only';
   image: string[];
   stock: number;
   avg_rating: number;

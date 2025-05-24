@@ -7,6 +7,8 @@ from .models import ProductVisibility
 class UniversityBase(BaseModel):
     name: str
     email: str
+    latitude: float
+    longitude: float
 
 class UniversityCreate(UniversityBase):
     pass
@@ -15,6 +17,8 @@ class UniversityRead(UniversityBase):
     id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+    latitude: float
+    longitude: float
 
     class Config:
         from_attributes = True
@@ -60,6 +64,27 @@ class ProductRead(ProductBase):
     avg_rating: Optional[float] = None
     num_of_ratings: Optional[int] = None
     image: Optional[list[str]] = None
+
+    class Config:
+        from_attributes = True
+
+class OrderBase(BaseModel):
+    product_id: str
+    quantity: int
+    seller_id: str
+
+class OrderCreate(OrderBase):
+    pass
+
+class OrderUpdate(BaseModel):
+    quantity: Optional[int] = None
+
+class OrderRead(OrderBase):
+    id: str
+    buyer_id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    product: Optional[ProductRead] = None
 
     class Config:
         from_attributes = True
