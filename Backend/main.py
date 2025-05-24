@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import database
 from fastapi.middleware.cors import CORSMiddleware
 from features.authentication.routes import router as auth_router
-from features.authentication.admin_routes import router as admin_router
+from features.Role_access.routes import router as admin_router
 try:
     database.Base.metadata.create_all(bind=database.engine)
 except Exception as e:
