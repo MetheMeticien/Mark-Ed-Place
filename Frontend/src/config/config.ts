@@ -41,7 +41,7 @@ export const ROUTES = {
 // Role-based access control
 export const ROLES = {
   ADMIN: 'admin',
-  USER: 'user',
+  USER: 'normal',
 } as const;
 
 export type UserRole = typeof ROLES[keyof typeof ROLES];

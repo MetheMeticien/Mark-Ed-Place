@@ -19,6 +19,7 @@ const MOCK_PRODUCTS = [
     sellerId: 'user123',
     category: 'Books',
     condition: 'Like New',
+    university: 'IUT',
     location: 'Campus Library',
     postedDate: '2025-05-01',
     image: 'https://placehold.co/600x400/e2e8f0/1e293b?text=Calculus+Book'
@@ -32,6 +33,7 @@ const MOCK_PRODUCTS = [
     sellerId: 'user456',
     category: 'Equipment',
     condition: 'Good',
+    university: 'Dhaka University',
     location: 'Science Building',
     postedDate: '2025-04-28',
     image: 'https://placehold.co/600x400/e2e8f0/1e293b?text=Lab+Equipment'
@@ -122,6 +124,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <p><span className="font-semibold">Category:</span> {product.category}</p>
             <p><span className="font-semibold">Location:</span> {product.location}</p>
             <p><span className="font-semibold">Posted:</span> {product.postedDate}</p>
+            <p><span className="font-semibold">University:</span> {product.university}</p>
           </div>
           
           <div className="space-y-2">
