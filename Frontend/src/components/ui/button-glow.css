@@ -1,0 +1,10 @@
+.glow-border {
+  position: relative;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.glow-border:hover, .glow-border:focus-visible {
+  border-color: #6ee7b7;
+  box-shadow: 0 0 0 2px #6ee7b7, 0 0 8px 2px #6ee7b744;
+}
