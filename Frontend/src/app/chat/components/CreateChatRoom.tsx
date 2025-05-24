@@ -30,7 +30,7 @@ export default function CreateChatRoom({ onChatCreated }: CreateChatRoomProps) {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:8000/users', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/users`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -63,7 +63,7 @@ export default function CreateChatRoom({ onChatCreated }: CreateChatRoomProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/chat/rooms', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/chat/rooms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

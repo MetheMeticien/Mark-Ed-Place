@@ -49,7 +49,7 @@ export default function UserProfilePage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/auth/user/username/${params.username}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user/username/${params.username}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           }
@@ -82,7 +82,7 @@ export default function UserProfilePage() {
         setIsLoadingProducts(true);
         setProductsError(null);
         
-        const response = await fetch(`http://localhost:8000/products/seller/${user.id}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/products/seller/${user.id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           }
@@ -109,7 +109,7 @@ export default function UserProfilePage() {
     if (!user) return;
 
     try {
-      const response = await fetch('http://localhost:8000/chat/rooms', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/chat/rooms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
