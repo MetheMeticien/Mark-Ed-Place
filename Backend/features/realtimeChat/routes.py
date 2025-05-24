@@ -94,7 +94,7 @@ async def websocket_endpoint(websocket: WebSocket, chat_id: str):
             await websocket.receive_text()
     except WebSocketDisconnect:
         # Clean up subscription when client disconnects
-        pass
+        chat_service.unsubscribe_from_chat(chat_id, message_callback)
 
 @router.websocket("/ws/user/{user_id}")
 async def user_websocket_endpoint(websocket: WebSocket, user_id: str):
@@ -112,4 +112,4 @@ async def user_websocket_endpoint(websocket: WebSocket, user_id: str):
             await websocket.receive_text()
     except WebSocketDisconnect:
         # Clean up subscription when client disconnects
-        pass 
+        chat_service.unsubscribe_from_user_chats(user_id, chat_update_callback) 

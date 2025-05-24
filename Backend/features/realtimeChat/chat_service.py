@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Dict
 from database import get_db
 from firebase_config import db
 import uuid
@@ -11,6 +11,7 @@ class ChatService:
     def __init__(self):
         self.chats_ref = db.child('chats')
         self.messages_ref = db.child('messages')
+        self._subscribers: Dict[str, List[Callable]] = {}
 
     def _user_to_read(self, user: User) -> UserRead:
         """Convert a User model to UserRead schema"""
@@ -37,6 +38,15 @@ class ChatService:
             elif isinstance(value, list):
                 data[key] = [self._convert_datetime_to_iso(item) if isinstance(item, dict) else item for item in value]
         return data
+
+    def _notify_subscribers(self, chat_id: str, update: dict):
+        """Notify all subscribers of a chat about an update"""
+        if chat_id in self._subscribers:
+            for callback in self._subscribers[chat_id]:
+                try:
+                    callback(update)
+                except Exception as e:
+                    print(f"Error notifying subscriber: {e}")
 
     async def create_chat_room(self, name: str, is_group: bool, participant_ids: List[str], current_user: User) -> dict:
         # Get user data for participants
@@ -66,7 +76,12 @@ class ChatService:
         chat_data = self._convert_datetime_to_iso(chat_data)
         
         chat_ref = self.chats_ref.push(chat_data)
-        return {'id': chat_ref.key, **chat_data}
+        chat_id = chat_ref.key
+        
+        # Notify subscribers about the new chat
+        self._notify_subscribers(chat_id, {'id': chat_id, **chat_data})
+        
+        return {'id': chat_id, **chat_data}
 
     async def get_chat_room(self, chat_id: str, current_user: User) -> Optional[dict]:
         chat_data = self.chats_ref.child(chat_id).get()
@@ -132,6 +147,7 @@ class ChatService:
         message_data = self._convert_datetime_to_iso(message_data)
 
         message_ref = self.messages_ref.push(message_data)
+        message_id = message_ref.key
         
         # Update chat's last message and timestamp
         update_data = {
@@ -144,8 +160,11 @@ class ChatService:
         update_data = self._convert_datetime_to_iso(update_data)
         
         self.chats_ref.child(chat_id).update(update_data)
+        
+        # Notify subscribers about the new message
+        self._notify_subscribers(chat_id, {'id': message_id, **message_data})
 
-        return {'id': message_ref.key, **message_data}
+        return {'id': message_id, **message_data}
 
     async def get_chat_messages(self, chat_id: str, current_user: User, limit: int = 50) -> List[dict]:
         all_messages = self.messages_ref.get() or {}
@@ -180,20 +199,30 @@ class ChatService:
 
     def subscribe_to_chat(self, chat_id: str, callback: Callable):
         """Subscribe to real-time updates for a specific chat room"""
-        def on_message(event):
-            if event.event_type == 'put':
-                callback(event.data)
-        
-        # Listen to new messages in the chat
-        self.messages_ref.order_by_child('chat_id').equal_to(chat_id).listen(on_message)
+        if chat_id not in self._subscribers:
+            self._subscribers[chat_id] = []
+        self._subscribers[chat_id].append(callback)
 
     def subscribe_to_user_chats(self, user_id: str, callback: Callable):
         """Subscribe to real-time updates for all chats a user is part of"""
-        def on_chat_update(event):
-            if event.event_type == 'put':
-                callback(event.data)
-        
-        # Listen to updates in user's chats
-        self.chats_ref.order_by_child('participant_ids').equal_to(user_id).listen(on_chat_update)
+        # Get all chats for the user
+        all_chats = self.chats_ref.get() or {}
+        for chat_id, chat_data in all_chats.items():
+            if user_id in chat_data.get('participant_ids', []):
+                self.subscribe_to_chat(chat_id, callback)
+
+    def unsubscribe_from_chat(self, chat_id: str, callback: Callable):
+        """Unsubscribe from real-time updates for a specific chat room"""
+        if chat_id in self._subscribers:
+            self._subscribers[chat_id] = [cb for cb in self._subscribers[chat_id] if cb != callback]
+            if not self._subscribers[chat_id]:
+                del self._subscribers[chat_id]
+
+    def unsubscribe_from_user_chats(self, user_id: str, callback: Callable):
+        """Unsubscribe from real-time updates for all chats a user is part of"""
+        all_chats = self.chats_ref.get() or {}
+        for chat_id, chat_data in all_chats.items():
+            if user_id in chat_data.get('participant_ids', []):
+                self.unsubscribe_from_chat(chat_id, callback)
 
 chat_service = ChatService()
