@@ -8,6 +8,7 @@ from features.products.crud import get_university
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_user_by_username(db: Session, username: str):
+    print(username)
     return db.query(models.User).filter(models.User.username == username).first()
 
 def get_user_by_phone_no(db: Session, phone_no: str):
