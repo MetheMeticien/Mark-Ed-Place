@@ -38,12 +38,23 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        phone_no: str = payload.get("sub")
-        if phone_no is None:
+        username: str = payload.get("sub")
+        if username is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = db.query(User).filter(User.phone_no == phone_no).first()
+    
+    # Try to find user by email first (for backward compatibility)
+    user = db.query(User).filter(User.email == username).first()
+    
+    # If not found by email, try username
+    if user is None:
+        user = db.query(User).filter(User.username == username).first()
+    
+    # If still not found, try phone_no (for backward compatibility)
+    if user is None:
+        user = db.query(User).filter(User.phone_no == username).first()
+        
     if user is None:
         raise credentials_exception
     return user

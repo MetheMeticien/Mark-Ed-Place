@@ -32,23 +32,57 @@ export const authApi = {
    * Login with email and password
    */
   async login(credentials: { email: string; password: string }) {
-    const response = await apiRequest<{ 
-      user: User; 
-      access_token: string; 
-      refresh_token?: string 
-    }>(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
+    // First get the user data from login endpoint
+    const userResponse = await apiRequest<{ user: User }>(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
+
+    console.log(userResponse);
     
-    if (response.success && response.data) {
-      storage.setItem('access_token', response.data.access_token);
-      if (response.data.refresh_token) {
-        storage.setItem('refresh_token', response.data.refresh_token);
-      }
+    if (userResponse.error || !userResponse.data) {
+      return userResponse as ApiResponse<{ user: User; access_token: string; refresh_token?: string }>;
     }
     
-    return response;
+    // Then get the token using the token endpoint with username as the email
+    // This matches the backend's OAuth2PasswordRequestForm expectation
+    const formData = new FormData();
+    formData.append('username', credentials.email);
+    formData.append('password', credentials.password);
+    
+    const tokenResponse = await apiRequest<{ 
+      access_token: string; 
+      token_type: string;
+      refresh_token?: string 
+    }>(API_CONFIG.ENDPOINTS.AUTH.TOKEN, {
+      method: 'POST',
+      body: formData,
+    });
+
+    console.log(tokenResponse);
+    
+    if (tokenResponse.error || !tokenResponse.data) {
+      return { 
+        success: false, 
+        error: tokenResponse.error || { message: 'Failed to get token', statusCode: 401 }
+      };
+    }
+    
+    // Store tokens
+    storage.setItem('access_token', tokenResponse.data.access_token);
+    if (tokenResponse.data.refresh_token) {
+      storage.setItem('refresh_token', tokenResponse.data.refresh_token);
+    }
+    
+    // Return combined response
+    return {
+      success: true,
+      data: {
+        user: userResponse.data.user,
+        access_token: tokenResponse.data.access_token,
+        refresh_token: tokenResponse.data.refresh_token
+      }
+    };
   },
 
   /**
@@ -102,7 +136,7 @@ export const authApi = {
    * Get the current authenticated user
    */
   async getCurrentUser() {
-    return apiRequest<{ user: User }>(API_CONFIG.ENDPOINTS.AUTH.ME);
+    return apiRequest<User>(API_CONFIG.ENDPOINTS.AUTH.ME);
   },
   
   /**

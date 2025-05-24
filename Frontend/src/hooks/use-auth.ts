@@ -61,10 +61,38 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
       const { data, error } = await authApi.getCurrentUser();
       
       if (error) throw new Error(error.message);
+
+      console.log("From checkAuth: ", data);
       
-      if (data?.user) {
+      if (data) {
+        // Map the API response to match our User interface
+        // Type assertion to handle the API response structure
+        const apiData = data as unknown as {
+          id: string;
+          username: string;
+          email: string;
+          first_name: string;
+          last_name: string;
+          phone_no?: string;
+          gender?: string;
+          role?: string;
+          created_at?: string;
+        };
+        
+        const userData: User = {
+          id: apiData.id,
+          username: apiData.username,
+          email: apiData.email,
+          first_name: apiData.first_name,
+          last_name: apiData.last_name,
+          phone_no: apiData.phone_no || '',
+          gender: apiData.gender || '',
+          role: apiData.role,
+          createdAt: apiData.created_at
+        };
+        
         updateState({
-          user: data.user,
+          user: userData,
           isLoading: false,
           isAuthenticated: true,
           error: null,
@@ -82,7 +110,9 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
       });
       
       // Redirect to login if not already there and not a public route
-      const isPublicRoute = [ROUTES.LOGIN, ROUTES.SIGNUP, ROUTES.HOME].includes(pathname || '');
+      // Check if current path is a public route
+      const path = pathname || '';
+      const isPublicRoute = path === ROUTES.LOGIN || path === ROUTES.SIGNUP || path === ROUTES.HOME;
       if (!isPublicRoute) {
         router.push(ROUTES.LOGIN);
       }
@@ -94,12 +124,14 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
       updateState({ isLoading: true, error: null });
       
       const response = await authApi.login(credentials);
+
+      console.log( "From useAuth: ", response);
       
       if (response.error || !response.data) {
         throw new Error(response.error?.message || 'Login failed');
       }
       
-      // Token handling is now managed in the API client
+
       updateState({
         user: response.data.user,
         isLoading: false,

@@ -8,6 +8,7 @@ export const API_CONFIG = {
       LOGOUT: '/auth/logout',
       REFRESH: '/auth/refresh',
       ME: '/auth/me',
+      TOKEN: '/auth/token',
     },
     USERS: {
       PROFILE: '/users/me',
