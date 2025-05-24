@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RecentSales } from '@/components/dashboard/recent-sales';
 import { Overview } from '@/components/dashboard/overview';
 import { UniversityManagement } from '@/components/dashboard/university-management';
+import { ModeratorRequests } from '@/components/dashboard/moderator-requests';
 
 export default function DashboardPage() {
   return (
@@ -21,7 +22,7 @@ export default function DashboardPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="universities">Universities</TabsTrigger>
+          <TabsTrigger value="administration">Administration</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -156,8 +157,11 @@ export default function DashboardPage() {
           </div>
         </TabsContent>
         
-        <TabsContent value="universities" className="space-y-4">
-          <UniversityManagement />
+        <TabsContent value="administration" className="space-y-8">
+          <div className="grid gap-6">
+            <ModeratorRequests />
+            <UniversityManagement />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
