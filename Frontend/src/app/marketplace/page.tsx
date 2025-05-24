@@ -1,97 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ROUTES } from '@/config/config';
-
-// Mock data for products
-const MOCK_PRODUCTS = [
-  {
-    id: '1',
-    title: 'Introduction to Calculus',
-    description: 'A comprehensive guide to calculus fundamentals',
-    price: 25.99,
-    seller: 'Math Guru',
-    category: 'Books',
-    image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Calculus+Book'
-  },
-  {
-    id: '2',
-    title: 'Physics Lab Equipment',
-    description: 'Essential tools for physics experiments',
-    price: 149.99,
-    seller: 'Science Supplies',
-    category: 'Equipment',
-    image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Lab+Equipment'
-  },
-  {
-    id: '3',
-    title: 'Programming Fundamentals',
-    description: 'Learn the basics of coding with this beginner-friendly guide',
-    price: 19.99,
-    seller: 'Code Master',
-    category: 'Books',
-    image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Programming+Book'
-  },
-  {
-    id: '4',
-    title: 'Graphing Calculator',
-    description: 'Advanced calculator for math and science courses',
-    price: 89.99,
-    seller: 'Tech Tools',
-    category: 'Equipment',
-    image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Calculator'
-  },
-  {
-    id: '5',
-    title: 'Chemistry Study Guide',
-    description: 'Comprehensive review for chemistry exams',
-    price: 22.50,
-    seller: 'Science Scholar',
-    category: 'Books',
-    image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Chemistry+Guide'
-  },
-  {
-    id: '6',
-    title: 'Laptop Stand',
-    description: 'Ergonomic stand for better posture during long study sessions',
-    price: 34.99,
-    seller: 'Ergo Solutions',
-    category: 'Accessories',
-    image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Laptop+Stand'
-  },
-  {
-    id: '7',
-    title: 'Wireless Headphones',
-    description: 'Noise-cancelling headphones for distraction-free studying',
-    price: 79.99,
-    seller: 'Audio Tech',
-    category: 'Accessories',
-    image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Headphones'
-  },
-  {
-    id: '8',
-    title: 'Art Supplies Set',
-    description: 'Complete set of art supplies for creative projects',
-    price: 45.00,
-    seller: 'Creative Corner',
-    category: 'Supplies',
-    image: 'https://placehold.co/300x200/e2e8f0/1e293b?text=Art+Supplies'
-  }
-];
+import { productApi, Product } from '@/lib/product-api';
+import { toast } from '@/components/ui/use-toast';
+// Fallback image for products without images
+const FALLBACK_IMAGE = 'https://placehold.co/300x200/e2e8f0/1e293b?text=No+Image';
 
 // Categories for filtering
-const CATEGORIES = ['All', 'Books', 'Equipment', 'Accessories', 'Supplies'];
+const CATEGORIES = ['All', 'Books', 'Equipment', 'Accessories', 'Supplies', 'Electronics', 'Clothing', 'Furniture', 'Other'];
 
 export default function MarketplacePage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const response = await productApi.getProducts();
+        
+        if (response.error) {
+          throw new Error(response.error.message);
+        }
+        
+        if (response.data) {
+          setProducts(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load products. Please try again later.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, []);
+  
+  // Filter products by category
   const filteredProducts = activeCategory === 'All' 
-    ? MOCK_PRODUCTS 
-    : MOCK_PRODUCTS.filter(product => product.category === activeCategory);
+    ? products 
+    : products.filter(product => product.category === activeCategory);
 
   return (
     <div className="container py-8">
@@ -103,7 +63,9 @@ export default function MarketplacePage() {
         </p>
         <div className="flex flex-col md:flex-row justify-center gap-4">
           <Button size="lg">Browse Products</Button>
-          <Button size="lg" variant="outline">Sell Your Items</Button>
+          <Link href={`${ROUTES.MARKETPLACE}/sell`}>
+            <Button size="lg" variant="outline">Sell Your Items</Button>
+          </Link>
         </div>
       </section>
 
@@ -143,31 +105,45 @@ export default function MarketplacePage() {
         
         {/* Products Grid */}
         <TabsContent value={activeCategory} className="mt-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {filteredProducts.map(product => (
-              <Link href={`${ROUTES.PRODUCT}/${product.id}`} key={product.id}>
-                <Card className="h-full overflow-hidden transition-all hover:shadow-md">
-                  <div className="aspect-video w-full overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      className="h-full w-full object-cover transition-transform hover:scale-105"
-                    />
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold">{product.title}</h3>
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                      {product.description}
-                    </p>
-                    <p className="mt-2 font-medium">${product.price.toFixed(2)}</p>
-                  </CardContent>
-                  <CardFooter className="border-t p-4 pt-2">
-                    <p className="text-xs text-muted-foreground">Sold by: {product.seller}</p>
-                  </CardFooter>
-                </Card>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+              <span className="ml-2">Loading products...</span>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-lg text-muted-foreground">No products found in this category.</p>
+              <Link href={`${ROUTES.MARKETPLACE}/sell`} className="mt-4 inline-block">
+                <Button>Add Your First Product</Button>
               </Link>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {filteredProducts.map(product => (
+                <Link href={`${ROUTES.PRODUCT}/${product.id}`} key={product.id}>
+                  <Card className="h-full overflow-hidden transition-all hover:shadow-md">
+                    <div className="aspect-video w-full overflow-hidden">
+                      <img
+                        src={product.image && product.image.length > 0 ? product.image[0] : FALLBACK_IMAGE}
+                        alt={product.title}
+                        className="h-full w-full object-cover transition-transform hover:scale-105"
+                      />
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold">{product.title}</h3>
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                        {product.description}
+                      </p>
+                      <p className="mt-2 font-medium">${product.price.toFixed(2)}</p>
+                    </CardContent>
+                    <CardFooter className="border-t p-4 pt-2">
+                      <p className="text-xs text-muted-foreground">Location: {product.location}</p>
+                    </CardFooter>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

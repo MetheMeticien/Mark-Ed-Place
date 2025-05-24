@@ -71,6 +71,9 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean, isModer
       if (data) {
         // Map the API response to match our User interface
         // Type assertion to handle the API response structure
+
+        console.log("From checkAuth for user: ", data);
+
         const apiData = data as unknown as {
           id: string;
           username: string;
@@ -80,8 +83,17 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean, isModer
           phone_no?: string;
           gender?: string;
           role?: string;
+          university?: {
+            id: string;
+            name: string;
+            country: string;
+            city: string;
+            logo: string;
+          };
           created_at?: string;
         };
+
+        console.log("apidata for user: ", apiData);
         
         const userData: User = {
           id: apiData.id,
@@ -92,6 +104,7 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean, isModer
           phone_no: apiData.phone_no || '',
           gender: apiData.gender || '',
           role: apiData.role,
+          university_id: apiData.university?.id || '',
           createdAt: apiData.created_at
         };
         

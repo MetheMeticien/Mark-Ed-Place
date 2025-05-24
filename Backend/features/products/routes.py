@@ -95,3 +95,26 @@ def delete_product(
     
     crud.delete_product(db, product_id)
     return {"message": "Product deleted successfully"} 
+
+@router.get("/seller/{seller_id}", response_model=List[schemas.ProductRead])
+def get_products_by_seller(
+    seller_id: str,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Get all products from a specific seller"""
+    products = crud.get_seller_products(db, seller_id)
+    
+    # Filter products based on visibility and user's university
+    if current_user:
+        # If user is logged in, show all products from their university plus products marked as visible to all
+        visible_products = [
+            p for p in products if 
+            p.visibility == models.ProductVisibility.ALL or 
+            (p.visibility == models.ProductVisibility.UNIVERSITY_ONLY and p.university_id == current_user.university_id)
+        ]
+    else:
+        # If user is not logged in, only show products visible to all
+        visible_products = [p for p in products if p.visibility == models.ProductVisibility.ALL]
+    
+    return visible_products

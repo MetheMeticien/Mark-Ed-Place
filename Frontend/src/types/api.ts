@@ -13,6 +13,33 @@ export interface User {
   updatedAt?: string;
 }
 
+export type Product = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  condition: string;
+  location: string;
+  university_id: string;
+  visibility: string;
+  image: string | null;
+  stock: number;
+  avg_rating: number;
+  num_of_ratings: number;
+  seller_id: string;
+  created_at: string;
+  updated_at: string | null;
+  university?: {
+    name: string;
+    email: string;
+    id: string;
+    created_at: string;
+    updated_at: string | null;
+  };
+};
+
+
 export interface LoginRequest {
   email: string;
   password: string;
