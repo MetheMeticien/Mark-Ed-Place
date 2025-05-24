@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -10,11 +10,28 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
 import { ROUTES, ROLES } from '@/config/config';
-import { userApi } from '@/lib/api-client';
+import { userApi, productApi } from '@/lib/api-client';
 import { toast } from '@/components/ui/use-toast';
 import { Edit, Package, ShieldCheck, ShoppingCart, User as UserIcon } from 'lucide-react';
+import { Product } from '@/types/api';
 
-// Mock data for user listings
+// Helper function to format date
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+// Helper function to map product status
+const getProductStatus = (product: Product) => {
+  // This is a placeholder - in a real app, you'd have a status field or determine it based on other fields
+  return product.stock > 0 ? 'active' : 'sold';
+};
+
+// Helper function to get product image
+const getProductImage = (product: Product) => {
+  return product.image || `https://placehold.co/300x200/e2e8f0/1e293b?text=${encodeURIComponent(product.title)}`;
+};
+
 const MOCK_LISTINGS = [
   {
     id: '101',
@@ -99,16 +116,36 @@ export default function ProfilePage() {
   });
   const [moderatorRequestReason, setModeratorRequestReason] = useState('');
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [userProducts, setUserProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveProfile = () => {
-    // Implement profile update logic here
-    console.log('Saving profile:', formData);
-    setIsEditing(false);
+  const handleSaveProfile = async () => {
+    try {
+      // TODO: Implement API call to update user profile
+      // const response = await userApi.updateProfile(formData);
+      
+      toast({
+        title: 'Profile Updated',
+        description: 'Your profile has been updated successfully.',
+      });
+      
+      // Update user context if needed
+      // updateUser({ ...user, ...formData });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update profile',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   const handleModeratorRequest = async () => {
@@ -151,6 +188,33 @@ export default function ProfilePage() {
       setIsSubmittingRequest(false);
     }
   };
+
+  // Fetch user's products when component mounts and user is authenticated
+  useEffect(() => {
+    const fetchUserProducts = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoadingProducts(true);
+        setProductsError(null);
+        
+        const response = await productApi.getSellerProducts(user.id);
+        
+        if (response.success && response.data) {
+          setUserProducts(response.data);
+        } else {
+          setProductsError(response.error?.message || 'Failed to fetch your listings');
+        }
+      } catch (error) {
+        console.error('Error fetching user products:', error);
+        setProductsError(error instanceof Error ? error.message : 'An error occurred while fetching your listings');
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    fetchUserProducts();
+  }, [user?.id]);
 
   return (
     <div className="container py-8">
@@ -301,53 +365,87 @@ export default function ProfilePage() {
                 My Orders
               </TabsTrigger>
             </TabsList>
-            
             {/* My Listings Tab */}
             <TabsContent value="listings" className="mt-6">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-xl font-semibold">My Listings</h3>
-                <Button>
+                <Button onClick={() => router.push(ROUTES.MARKETPLACE + '/sell')}>
                   Create New Listing
                 </Button>
               </div>
               
-              {MOCK_LISTINGS.length > 0 ? (
+              {isLoadingProducts ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="mb-2 h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-primary mx-auto"></div>
+                    <p className="text-sm text-muted-foreground">Loading your listings...</p>
+                  </div>
+                </div>
+              ) : productsError ? (
+                <div className="rounded-lg border border-destructive p-8 text-center">
+                  <h4 className="text-lg font-medium text-destructive">Error Loading Listings</h4>
+                  <p className="mt-2 text-sm text-muted-foreground">{productsError}</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => {
+                      setIsLoadingProducts(true);
+                      setProductsError(null);
+                      productApi.getSellerProducts(user?.id || '').then(response => {
+                        if (response.success && response.data) {
+                          setUserProducts(response.data);
+                        } else {
+                          setProductsError(response.error?.message || 'Failed to fetch your listings');
+                        }
+                        setIsLoadingProducts(false);
+                      }).catch(error => {
+                        setProductsError(error instanceof Error ? error.message : 'An error occurred');
+                        setIsLoadingProducts(false);
+                      });
+                    }}
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              ) : userProducts.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {MOCK_LISTINGS.map(listing => (
-                    <Card key={listing.id} className="overflow-hidden">
+                  {userProducts.map(product => (
+                    <Card key={product.id} className="overflow-hidden">
                       <div className="relative aspect-video w-full overflow-hidden">
                         <img
-                          src={listing.image}
-                          alt={listing.title}
+                          src={getProductImage(product)}
+                          alt={product.title}
                           className="h-full w-full object-cover"
                         />
                         <div className={`absolute right-2 top-2 rounded-full px-2 py-1 text-xs font-medium ${
-                          listing.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          getProductStatus(product) === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                         }`}>
-                          {listing.status === 'active' ? 'Active' : 'Sold'}
+                          {getProductStatus(product) === 'active' ? 'Active' : 'Sold'}
                         </div>
                       </div>
                       <CardContent className="p-4">
-                        <h4 className="font-semibold">{listing.title}</h4>
-                        <p className="mt-1 text-sm text-muted-foreground line-clamp-1">
-                          {listing.description}
-                        </p>
-                        <p className="mt-2 font-medium">${listing.price.toFixed(2)}</p>
+                        <h4 className="text-lg font-semibold">{product.title}</h4>
+                        <p className="text-sm text-muted-foreground">{product.description}</p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="font-medium">${product.price.toFixed(2)}</span>
+                          <span className="text-xs text-muted-foreground">Listed on {formatDate(product.created_at)}</span>
+                        </div>
                       </CardContent>
-                      <CardFooter className="flex justify-between border-t p-4">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => router.push(`${ROUTES.PRODUCT}/${listing.id}`)}
-                        >
-                          View
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                        >
-                          Edit
-                        </Button>
+                      <CardFooter className="border-t p-4">
+                        <div className="flex w-full gap-2">
+                          <Button variant="outline" size="sm" className="flex-1">
+                            <Edit className="mr-1 h-4 w-4" />
+                            Edit
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => router.push(`${ROUTES.PRODUCT}/${product.id}`)}
+                          >
+                            View Details
+                          </Button>
+                        </div>
                       </CardFooter>
                     </Card>
                   ))}
@@ -358,7 +456,12 @@ export default function ProfilePage() {
                   <p className="mt-2 text-sm text-muted-foreground">
                     You haven't created any listings yet. Start selling your items!
                   </p>
-                  <Button className="mt-4">Create Your First Listing</Button>
+                  <Button 
+                    className="mt-4"
+                    onClick={() => router.push(ROUTES.MARKETPLACE + '/sell')}
+                  >
+                    Create Your First Listing
+                  </Button>
                 </div>
               )}
             </TabsContent>
@@ -366,7 +469,7 @@ export default function ProfilePage() {
             {/* My Orders Tab */}
             <TabsContent value="orders" className="mt-6">
               <h3 className="mb-4 text-xl font-semibold">My Orders</h3>
-              
+              {/* Orders content */}
               {MOCK_ORDERS.length > 0 ? (
                 <div className="space-y-4">
                   {MOCK_ORDERS.map(order => (

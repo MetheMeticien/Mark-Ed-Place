@@ -195,3 +195,61 @@ export const userApi = {
     });
   },
 };
+
+/**
+ * API client for product-related endpoints
+ */
+export const productApi = {
+  /**
+   * Get all products
+   */
+  async getAllProducts() {
+    return apiRequest(API_CONFIG.ENDPOINTS.PRODUCTS.ALL);
+  },
+
+  /**
+   * Get a single product by ID
+   */
+  async getProduct(id: string) {
+    const endpoint = API_CONFIG.ENDPOINTS.PRODUCTS.GET.replace(':id', id);
+    return apiRequest(endpoint);
+  },
+
+  /**
+   * Get products by seller ID
+   */
+  async getSellerProducts(sellerId: string) {
+    return apiRequest(`/products/seller/${sellerId}`);
+  },
+
+  /**
+   * Create a new product
+   */
+  async createProduct(productData: any) {
+    return apiRequest(API_CONFIG.ENDPOINTS.PRODUCTS.CREATE, {
+      method: 'POST',
+      body: JSON.stringify(productData),
+    });
+  },
+
+  /**
+   * Update a product
+   */
+  async updateProduct(id: string, productData: any) {
+    const endpoint = API_CONFIG.ENDPOINTS.PRODUCTS.UPDATE.replace(':id', id);
+    return apiRequest(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(productData),
+    });
+  },
+
+  /**
+   * Delete a product
+   */
+  async deleteProduct(id: string) {
+    const endpoint = API_CONFIG.ENDPOINTS.PRODUCTS.DELETE.replace(':id', id);
+    return apiRequest(endpoint, {
+      method: 'DELETE',
+    });
+  },
+};
