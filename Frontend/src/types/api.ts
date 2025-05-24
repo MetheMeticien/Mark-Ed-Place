@@ -23,6 +23,7 @@ export interface SignupRequest extends LoginRequest {
   last_name: string;
   phone_no?: string;
   gender?: string;
+  university_id?: string;
   confirmPassword: string;
 }
 

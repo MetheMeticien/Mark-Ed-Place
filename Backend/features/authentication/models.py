@@ -15,7 +15,7 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(String, primary_key=True, index=True)
-    phone_no = Column(String, unique=True, nullable=True)
+    phone_no = Column(String, nullable=True)
     email = Column(String, unique=True, nullable=False)
     username = Column(String, unique=True, nullable=False)
     first_name = Column(String, nullable=False)

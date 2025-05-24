@@ -15,6 +15,13 @@ export const API_CONFIG = {
       UPDATE_PROFILE: '/users/me',
       CHANGE_PASSWORD: '/users/change-password',
     },
+    UNIVERSITIES: {
+      ALL: '/universities',
+      ADD: '/universities',
+    },
+    MODERATOR_REQUESTS: {
+      ALL: '/moderator-requests',
+    },
   },
   STORAGE_KEYS: {
     ACCESS_TOKEN: 'access_token',
@@ -30,6 +37,10 @@ export const ROUTES = {
   LOGIN: '/login',
   SIGNUP: '/signup',
   DASHBOARD: '/dashboard',
+  MARKETPLACE: '/marketplace',
+  PRODUCT: '/marketplace/product',
+  UNIVERSITY_MARKETPLACE: '/marketplace/university',
+  PROFILE: '/profile',
   UNAUTHORIZED: '/unauthorized',
   NOT_FOUND: '/404',
   SERVER_ERROR: '/500',
@@ -38,7 +49,8 @@ export const ROUTES = {
 // Role-based access control
 export const ROLES = {
   ADMIN: 'admin',
-  USER: 'user',
+  USER: 'normal',
+  MODERATOR: 'moderator',
 } as const;
 
 export type UserRole = typeof ROLES[keyof typeof ROLES];

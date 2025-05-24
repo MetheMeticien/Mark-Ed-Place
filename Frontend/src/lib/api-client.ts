@@ -96,6 +96,7 @@ export const authApi = {
     password: string; 
     phone_no?: string; 
     gender?: string; 
+    university_id?: string;
   }) {
     const response = await apiRequest<{ 
       user: User; 
@@ -179,6 +180,16 @@ export const userApi = {
    */
   async changePassword(data: { currentPassword: string; newPassword: string }) {
     return apiRequest(API_CONFIG.ENDPOINTS.USERS.CHANGE_PASSWORD, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Request to become a moderator
+   */
+  async requestModerator(data: { reason: string }) {
+    return apiRequest('/moderator-requests/', {
       method: 'POST',
       body: JSON.stringify(data),
     });
