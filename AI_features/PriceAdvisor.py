@@ -108,6 +108,7 @@ Return your answer in BDT and explain your reasoning.
         return response
 
 # Example usage:
-# advisor = PriceAdvisor()
-# result = advisor.get_price_estimate("Gshock Casio Watch", "Rugged Casio Watch", "Used - Poor")
-# print(result)
+if __name__ == "__main__":
+    advisor = PriceAdvisor()
+    result = advisor.get_price_estimate("Gshock Casio Watch", "Rugged Casio Watch", "Used - Poor")
+    print(result)

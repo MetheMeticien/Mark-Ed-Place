@@ -87,3 +87,8 @@ class Rag:
             "answer": result["result"],
             "sources": result["source_documents"]
         }
+
+
+if __name__ == "__main__":
+    rag = Rag()
+    print(rag.retrieve_all_queried_products("nigga"))
