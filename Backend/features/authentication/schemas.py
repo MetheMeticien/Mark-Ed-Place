@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
+from features.authentication.models import Role
 
 class UserBase(BaseModel):
     phone_no: str
@@ -9,6 +10,7 @@ class UserBase(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     gender: Optional[str] = None
+    role: Optional[Role] = Role.NORMAL
 
 class UserCreate(UserBase):
     password: str

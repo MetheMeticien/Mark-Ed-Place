@@ -5,6 +5,12 @@ from database import Base
 import enum
 
 
+class Role(str, enum.Enum):
+    ADMIN = "admin"
+    MODERATOR = "moderator"
+    NORMAL = "normal"
+
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -16,4 +22,5 @@ class User(Base):
     last_name = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
     gender = Column(String, nullable=True)
+    role = Column(Enum(Role), default=Role.NORMAL, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)

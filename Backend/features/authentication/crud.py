@@ -39,3 +39,10 @@ def authenticate_user(db: Session, email: str, password: str):
     if not pwd_context.verify(password, user.hashed_password):
         return None
     return user
+
+
+
+
+def get_all_users(db: Session):
+    """Get all users from the database"""
+    return db.query(models.User).all()
