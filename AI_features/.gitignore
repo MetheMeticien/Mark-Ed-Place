@@ -39,4 +39,4 @@ venv.bak/
 # Project specific
 AI_features/*/env/
 *.log
-chroma_db/
+chroma_db/ 
