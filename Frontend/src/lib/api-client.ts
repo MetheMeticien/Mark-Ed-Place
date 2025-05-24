@@ -54,7 +54,15 @@ export const authApi = {
   /**
    * Register a new user
    */
-  async signup(userData: { name: string; email: string; password: string }) {
+  async signup(userData: { 
+    first_name: string; 
+    last_name: string; 
+    username: string; 
+    email: string; 
+    password: string; 
+    phone_no?: string; 
+    gender?: string; 
+  }) {
     const response = await apiRequest<{ 
       user: User; 
       access_token: string; 

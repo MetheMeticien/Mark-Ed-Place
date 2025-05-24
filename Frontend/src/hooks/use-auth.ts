@@ -125,9 +125,13 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
       updateState({ isLoading: true, error: null });
       
       const signupData = {
-        name: userData.name,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        username: userData.username,
         email: userData.email,
         password: userData.password,
+        phone_no: userData.phone_no,
+        gender: userData.gender,
       };
       
       const response = await authApi.signup(signupData);
