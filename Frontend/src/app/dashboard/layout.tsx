@@ -1,7 +1,8 @@
 'use client';
 
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
-import ProtectedRoute from '@/components/auth/protected-route';
+import RoleBasedRoute from '@/components/auth/role-based-route';
+import { ROLES } from '@/config/config';
 
 export default function DashboardLayout({
   children,
@@ -9,13 +10,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute>
+    <RoleBasedRoute allowedRoles={[ROLES.ADMIN]}>
       <div className="flex h-screen bg-background">
         <DashboardSidebar />
         <div className="flex-1 overflow-auto">
           <main className="flex-1 overflow-y-auto p-6">{children}</main>
         </div>
       </div>
-    </ProtectedRoute>
+    </RoleBasedRoute>
   );
 }

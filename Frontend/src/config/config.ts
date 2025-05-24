@@ -30,6 +30,10 @@ export const ROUTES = {
   LOGIN: '/login',
   SIGNUP: '/signup',
   DASHBOARD: '/dashboard',
+  MARKETPLACE: '/marketplace',
+  PRODUCT: '/marketplace/product',
+  UNIVERSITY_MARKETPLACE: '/marketplace/university',
+  PROFILE: '/profile',
   UNAUTHORIZED: '/unauthorized',
   NOT_FOUND: '/404',
   SERVER_ERROR: '/500',
@@ -38,7 +42,7 @@ export const ROUTES = {
 // Role-based access control
 export const ROLES = {
   ADMIN: 'admin',
-  USER: 'user',
+  USER: 'normal',
 } as const;
 
 export type UserRole = typeof ROLES[keyof typeof ROLES];

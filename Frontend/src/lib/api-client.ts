@@ -96,6 +96,7 @@ export const authApi = {
     password: string; 
     phone_no?: string; 
     gender?: string; 
+    university_id?: string;
   }) {
     const response = await apiRequest<{ 
       user: User; 

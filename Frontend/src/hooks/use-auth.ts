@@ -164,6 +164,7 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
         password: userData.password,
         phone_no: userData.phone_no,
         gender: userData.gender,
+        university_id: userData.university_id,
       };
       
       const response = await authApi.signup(signupData);
@@ -196,20 +197,17 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
   const logout = useCallback(async () => {
     try {
       updateState({ isLoading: true });
-      await authApi.logout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    } finally {
-      // Clear auth state
+
       setState({
         user: null,
         isLoading: false,
         isAuthenticated: false,
         error: null,
       });
-      
-      // Tokens are cleared in the API client
-      
+
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
       // Redirect to login page
       router.push(ROUTES.LOGIN);
     }
