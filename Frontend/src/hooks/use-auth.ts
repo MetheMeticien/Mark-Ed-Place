@@ -164,6 +164,7 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
         password: userData.password,
         phone_no: userData.phone_no,
         gender: userData.gender,
+        university_id: userData.university_id,
       };
       
       const response = await authApi.signup(signupData);

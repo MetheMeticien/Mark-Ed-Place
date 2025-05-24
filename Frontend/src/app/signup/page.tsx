@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
@@ -57,11 +57,23 @@ const formSchema = z
     path: ['confirmPassword'],
   });
 
+// University interface to match the API response
+interface University {
+  id: string;
+  name: string;
+  email: string;
+  created_at: string;
+  updated_at: string | null;
+}
+
 export default function SignupPage() {
   const { toast } = useToast();
   const router = useRouter();
   const { signup, isLoading, error } = useAuthContext();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [isLoadingUniversities, setIsLoadingUniversities] = useState(false);
+  const [selectedUniversityId, setSelectedUniversityId] = useState<string>('');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,11 +89,49 @@ export default function SignupPage() {
     },
   });
 
+  // Fetch universities from the API when component mounts
+  useEffect(() => {
+    const fetchUniversities = async () => {
+      setIsLoadingUniversities(true);
+      try {
+        const response = await fetch('http://localhost:8000/universities');
+        if (!response.ok) {
+          throw new Error('Failed to fetch universities');
+        }
+        const data = await response.json();
+        setUniversities(data);
+      } catch (error) {
+        console.error('Error fetching universities:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load universities. Please try again later.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingUniversities(false);
+      }
+    };
+
+    fetchUniversities();
+  }, [toast]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setServerError(null);
     
+    // Validate that a university has been selected
+    if (!selectedUniversityId) {
+      setServerError('Please select a university');
+      return;
+    }
+    
     try {
-      const response = await signup(values);
+      // Add university_id to the signup data
+      const signupData = {
+        ...values,
+        university_id: selectedUniversityId
+      };
+      
+      const response = await signup(signupData);
       
       if (!response.success) {
         setServerError(response.error?.message || 'Failed to create account');
@@ -187,6 +237,23 @@ export default function SignupPage() {
                   const handleDomainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
                     const newDomain = e.target.value;
                     onChange(`${username}@${newDomain}`);
+                    
+                    // Find the university ID that corresponds to the selected domain
+                    if (newDomain) {
+                      const selectedUniversity = universities.find(university => {
+                        const emailParts = university.email.split('@');
+                        const universityDomain = emailParts.length > 1 ? emailParts[1] : '';
+                        return universityDomain === newDomain;
+                      });
+                      
+                      if (selectedUniversity) {
+                        setSelectedUniversityId(selectedUniversity.id);
+                      } else {
+                        setSelectedUniversityId('');
+                      }
+                    } else {
+                      setSelectedUniversityId('');
+                    }
                   };
                   
                   return (
@@ -211,16 +278,24 @@ export default function SignupPage() {
                             className="flex h-10 w-full rounded-l-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             value={domain}
                             onChange={handleDomainChange}
+                            disabled={isLoadingUniversities}
                           >
                             <option value="">Select university</option>
-                            <option value="harvard.edu">harvard.edu</option>
-                            <option value="mit.edu">mit.edu</option>
-                            <option value="stanford.edu">stanford.edu</option>
-                            <option value="yale.edu">yale.edu</option>
-                            <option value="princeton.edu">princeton.edu</option>
-                            <option value="berkeley.edu">berkeley.edu</option>
-                            <option value="oxford.ac.uk">oxford.ac.uk</option>
-                            <option value="cambridge.ac.uk">cambridge.ac.uk</option>
+                            {isLoadingUniversities ? (
+                              <option value="" disabled>Loading universities...</option>
+                            ) : (
+                              universities.map((university) => {
+                                // Extract domain from university email (after @)
+                                const emailParts = university.email.split('@');
+                                const universityDomain = emailParts.length > 1 ? emailParts[1] : '';
+                                
+                                return (
+                                  <option key={university.id} value={universityDomain}>
+                                    {universityDomain}
+                                  </option>
+                                );
+                              })
+                            )}
                           </select>
                         </FormControl>
                       </div>
