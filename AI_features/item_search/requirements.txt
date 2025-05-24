@@ -1,0 +1,8 @@
+sentence-transformers
+psycopg2-binary==2.9.9
+chromadb
+python-dotenv
+google-generativeai
+langchain
+langchain-community
+langchain-google-genai
