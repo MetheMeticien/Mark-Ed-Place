@@ -32,7 +32,7 @@ import { toast } from '@/components/ui/use-toast';
 // Cloudinary configuration
 const CLOUDINARY_UPLOAD_PRESET = 'mark-ed-place';
 const CLOUDINARY_CLOUD_NAME = 'du2tvwrgx';
-const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/du2tvwrgx/image/upload';
 
 // Form schema
 const productSchema = z.object({
@@ -117,7 +117,7 @@ export default function SellItemPage() {
       formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
       try {
-        const response = await fetch(CLOUDINARY_UPLOAD_URL, {
+        const response = await fetch(CLOUDINARY_UPLOAD_URL || '', {
           method: 'POST',
           body: formData,
         });

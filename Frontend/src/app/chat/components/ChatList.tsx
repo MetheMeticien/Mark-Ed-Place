@@ -47,7 +47,12 @@ export default function ChatList({ chatRooms = [], activeChat, onChatSelect, onC
     return colors[index % colors.length];
   };
 
-  const safeChatRooms = Array.isArray(chatRooms) ? chatRooms : [];
+  // Sort chat rooms by last_message_time in descending order
+  const sortedChatRooms = [...(Array.isArray(chatRooms) ? chatRooms : [])].sort((a, b) => {
+    const timeA = a.last_message_time ? new Date(a.last_message_time).getTime() : 0;
+    const timeB = b.last_message_time ? new Date(b.last_message_time).getTime() : 0;
+    return timeB - timeA;
+  });
 
   const LoadingSkeleton = () => (
     <div className="space-y-2">
@@ -79,7 +84,7 @@ export default function ChatList({ chatRooms = [], activeChat, onChatSelect, onC
       <div className="flex-1 overflow-y-auto px-4">
         {isLoading ? (
           <LoadingSkeleton />
-        ) : safeChatRooms.length === 0 ? (
+        ) : sortedChatRooms.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
             <Users className="w-12 h-12 text-gray-400" />
             <p className="text-lg font-medium">No conversations yet</p>
@@ -89,7 +94,7 @@ export default function ChatList({ chatRooms = [], activeChat, onChatSelect, onC
           </div>
         ) : (
           <div className="space-y-2">
-            {safeChatRooms.map((chat) => {
+            {sortedChatRooms.map((chat) => {
               const chatName = getChatName(chat);
               const otherParticipant = chat.participants?.find(p => p.id !== user?.id);
               const initials = getInitials(chatName);
