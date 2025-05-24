@@ -15,7 +15,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-
+    university_id: str
 class UserRead(UserBase):
     id: str
     role: Role
