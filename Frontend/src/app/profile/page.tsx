@@ -7,9 +7,12 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
-import { ROUTES } from '@/config/config';
-import { Edit, Package, ShoppingCart, User as UserIcon } from 'lucide-react';
+import { ROUTES, ROLES } from '@/config/config';
+import { userApi } from '@/lib/api-client';
+import { toast } from '@/components/ui/use-toast';
+import { Edit, Package, ShieldCheck, ShoppingCart, User as UserIcon } from 'lucide-react';
 
 // Mock data for user listings
 const MOCK_LISTINGS = [
@@ -94,6 +97,8 @@ export default function ProfilePage() {
     phone_no: user?.phone_no || '',
     username: user?.username || ''
   });
+  const [moderatorRequestReason, setModeratorRequestReason] = useState('');
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -104,6 +109,47 @@ export default function ProfilePage() {
     // Implement profile update logic here
     console.log('Saving profile:', formData);
     setIsEditing(false);
+  };
+
+  const handleModeratorRequest = async () => {
+    if (!moderatorRequestReason.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please provide a reason for your request',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsSubmittingRequest(true);
+      const response = await userApi.requestModerator({ reason: moderatorRequestReason });
+
+      console.log(response);
+      
+      if (response.success) {
+        toast({
+          title: 'Request Submitted',
+          description: 'Your request to become a moderator has been submitted successfully.',
+        });
+        setModeratorRequestReason('');
+      } 
+      else{
+        toast({
+          title: 'Error',
+          description: response.error?.message || 'Failed to submit request',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to submit request',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmittingRequest(false);
+    }
   };
 
   return (
@@ -201,6 +247,44 @@ export default function ProfilePage() {
                 )}
               </div>
             </CardContent>
+
+            {/* Moderator Badge - Only visible for moderators */}
+            {user?.role === ROLES.MODERATOR && (
+              <CardContent className="border-t p-6">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800">
+                    <ShieldCheck className="h-5 w-5" />
+                    <span className="font-medium">Moderator</span>
+                  </div>
+                </div>
+              </CardContent>
+            )}
+            
+            {/* Moderator Request Section - Only visible for normal users */}
+            {user?.role === ROLES.USER && (
+              <CardContent className="border-t p-6">
+                <h3 className="mb-4 text-lg font-semibold">Request Moderator Role</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="moderator-reason">Why do you want to become a moderator?</Label>
+                    <Textarea
+                      id="moderator-reason"
+                      placeholder="Explain why you would make a good moderator..."
+                      value={moderatorRequestReason}
+                      onChange={(e) => setModeratorRequestReason(e.target.value)}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleModeratorRequest} 
+                    disabled={isSubmittingRequest || !moderatorRequestReason.trim()}
+                    className="w-full"
+                  >
+                    {isSubmittingRequest ? 'Submitting...' : 'Submit Request'}
+                  </Button>
+                </div>
+              </CardContent>
+            )}
           </Card>
         </div>
         

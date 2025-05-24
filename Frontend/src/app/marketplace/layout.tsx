@@ -11,7 +11,7 @@ export default function MarketplaceLayout({
   children: React.ReactNode;
 }) {
   return (
-    <RoleBasedRoute allowedRoles={[ROLES.USER]}>
+    <RoleBasedRoute allowedRoles={[ROLES.USER, ROLES.MODERATOR]}>
       <div className="flex min-h-screen flex-col bg-background">
         <MarketplaceNavbar />
         <main className="flex-1">

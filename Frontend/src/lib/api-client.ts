@@ -184,4 +184,14 @@ export const userApi = {
       body: JSON.stringify(data),
     });
   },
+
+  /**
+   * Request to become a moderator
+   */
+  async requestModerator(data: { reason: string }) {
+    return apiRequest('/moderator-requests/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
 };

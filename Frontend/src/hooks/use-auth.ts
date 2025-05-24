@@ -21,7 +21,7 @@ type AuthActions = {
   refreshUser: () => Promise<void>;
 };
 
-export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
+export function useAuth(): AuthState & AuthActions & { isAdmin: boolean, isModerator: boolean } {
   const router = useRouter();
   const pathname = usePathname();
   const [state, setState] = useState<AuthState>({
@@ -33,6 +33,10 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
 
   const isAdmin = useMemo(() => {
     return state.user?.role === ROLES.ADMIN;
+  }, [state.user]);
+  
+  const isModerator = useMemo(() => {
+    return state.user?.role === ROLES.MODERATOR;
   }, [state.user]);
   
   const updateState = useCallback((updates: Partial<AuthState>) => {
@@ -224,6 +228,7 @@ export function useAuth(): AuthState & AuthActions & { isAdmin: boolean } {
   return {
     ...state,
     isAdmin,
+    isModerator,
     login,
     signup,
     logout,
