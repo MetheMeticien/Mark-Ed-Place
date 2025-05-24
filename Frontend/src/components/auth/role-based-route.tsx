@@ -32,7 +32,7 @@ export default function RoleBasedRoute({
       // Redirect admin to dashboard, users to marketplace
       if (user.role === ROLES.ADMIN) {
         router.push('/dashboard');
-      } else {
+      } else if (user.role === ROLES.MODERATOR || user.role === ROLES.USER) {
         router.push('/marketplace');
       }
     }

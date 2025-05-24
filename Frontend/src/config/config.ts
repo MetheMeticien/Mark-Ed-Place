@@ -15,6 +15,13 @@ export const API_CONFIG = {
       UPDATE_PROFILE: '/users/me',
       CHANGE_PASSWORD: '/users/change-password',
     },
+    UNIVERSITIES: {
+      ALL: '/universities',
+      ADD: '/universities',
+    },
+    MODERATOR_REQUESTS: {
+      ALL: '/moderator-requests',
+    },
   },
   STORAGE_KEYS: {
     ACCESS_TOKEN: 'access_token',

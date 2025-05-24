@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { ROUTES, ROLES } from '@/config/config';
 import { userApi } from '@/lib/api-client';
 import { toast } from '@/components/ui/use-toast';
-import { Edit, Package, ShoppingCart, User as UserIcon } from 'lucide-react';
+import { Edit, Package, ShieldCheck, ShoppingCart, User as UserIcon } from 'lucide-react';
 
 // Mock data for user listings
 const MOCK_LISTINGS = [
@@ -124,6 +124,8 @@ export default function ProfilePage() {
     try {
       setIsSubmittingRequest(true);
       const response = await userApi.requestModerator({ reason: moderatorRequestReason });
+
+      console.log(response);
       
       if (response.success) {
         toast({
@@ -131,8 +133,13 @@ export default function ProfilePage() {
           description: 'Your request to become a moderator has been submitted successfully.',
         });
         setModeratorRequestReason('');
-      } else {
-        throw new Error(response.error?.message || 'Failed to submit request');
+      } 
+      else{
+        toast({
+          title: 'Error',
+          description: response.error?.message || 'Failed to submit request',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       toast({
@@ -241,6 +248,18 @@ export default function ProfilePage() {
               </div>
             </CardContent>
 
+            {/* Moderator Badge - Only visible for moderators */}
+            {user?.role === ROLES.MODERATOR && (
+              <CardContent className="border-t p-6">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-blue-800">
+                    <ShieldCheck className="h-5 w-5" />
+                    <span className="font-medium">Moderator</span>
+                  </div>
+                </div>
+              </CardContent>
+            )}
+            
             {/* Moderator Request Section - Only visible for normal users */}
             {user?.role === ROLES.USER && (
               <CardContent className="border-t p-6">
