@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
-from .models import ProductVisibility
+from .models import ProductVisibility, ProductStatus
 
 
 class UniversityBase(BaseModel):
@@ -32,6 +32,7 @@ class ProductBase(BaseModel):
     location: str
     university_id: str
     visibility: ProductVisibility = ProductVisibility.ALL
+    status: ProductStatus = ProductStatus.PENDING
     image: Optional[list[str]] = None
     stock: int
     avg_rating: Optional[float] = None
@@ -49,6 +50,7 @@ class ProductUpdate(BaseModel):
     location: Optional[str] = None
     university_id: Optional[str] = None
     visibility: Optional[ProductVisibility] = None
+    status: Optional[ProductStatus] = None
     image: Optional[list[str]] = None
     stock: Optional[int] = None
     avg_rating: Optional[float] = None

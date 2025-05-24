@@ -174,3 +174,24 @@ def delete_order(db: Session, order_id: str):
         db.delete(db_order)
         db.commit()
     return db_order
+
+# Product status operations
+def accept_product(db: Session, product_id: str):
+    """
+    Change a product's status from pending to accepted
+    """
+    db_product = get_product(db, product_id)
+    if db_product:
+        db_product.status = models.ProductStatus.ACCEPTED
+        db.commit()
+        db.refresh(db_product)
+    return db_product
+
+def get_pending_products(db: Session, university_id: str, skip: int = 0, limit: int = 100):
+    """
+    Get all pending products for a specific university
+    """
+    return db.query(models.Product).filter(
+        models.Product.university_id == university_id,
+        models.Product.status == models.ProductStatus.PENDING
+    ).offset(skip).limit(limit).all()

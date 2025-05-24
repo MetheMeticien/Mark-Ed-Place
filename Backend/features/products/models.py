@@ -9,6 +9,10 @@ class ProductVisibility(str, enum.Enum):
     ALL = "all"
     UNIVERSITY_ONLY = "university_only"
 
+class ProductStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+
 class University(Base):
     __tablename__= 'universities'
 
@@ -37,6 +41,7 @@ class Product(Base):
     location = Column(String, nullable=False)
     university_id = Column(String, ForeignKey('universities.id'), nullable=False)
     visibility = Column(Enum(ProductVisibility), default=ProductVisibility.ALL, nullable=False)
+    status = Column(Enum(ProductStatus), default=ProductStatus.PENDING, nullable=True)
     image: Optional[List[str]] = Column(ARRAY(String), nullable=True)
     stock = Column(Integer, nullable=False, server_default='0')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
