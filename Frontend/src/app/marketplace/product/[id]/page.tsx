@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ROUTES } from '@/config/config';
-import { ArrowLeft, ShoppingCart, Heart } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Heart, MapPin } from 'lucide-react';
 import { productApi, Product } from '@/lib/product-api';
 import { toast } from '@/components/ui/use-toast';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 // Fallback image for products without images
 const FALLBACK_IMAGE = 'https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image';
 
@@ -23,12 +24,65 @@ const formatDate = (dateString: string) => {
   });
 };
 
+// Map container styles
+const mapContainerStyle = {
+  width: '100%',
+  height: '400px'
+};
+
+// Default center location (Dhaka, Bangladesh)
+const defaultCenter = {
+  lat: 23.8103,
+  lng: 90.4125
+};
+
 export default function ProductPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  
+  // Google Maps related states
+  const [meetingLocation, setMeetingLocation] = useState<google.maps.LatLngLiteral | null>(null);
+  const [isBuyer, setIsBuyer] = useState(true); // Hard-coded for now - true means current user is buyer
+  const mapRef = useRef<google.maps.Map | null>(null);
+  
+  // Load Google Maps API
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '',
+    libraries: ['places']
+  });
+  
+  // Google Maps click handler - defined at the top level
+  const onMapClick = useCallback((event: google.maps.MapMouseEvent) => {
+    if (!isBuyer || !event.latLng) return; // Only buyers can set meeting location
+    
+    const newLocation = {
+      lat: event.latLng.lat(),
+      lng: event.latLng.lng()
+    };
+    setMeetingLocation(newLocation);
+    
+    toast({
+      title: 'Meeting Location Set',
+      description: 'You have marked a location for meetup with the seller.',
+    });
+  }, [isBuyer]);
+  
+  // Save map reference when the map loads - defined at the top level
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+  }, []);
+  
+  // Reset meeting location
+  const handleResetLocation = useCallback(() => {
+    setMeetingLocation(null);
+    toast({
+      title: 'Location Reset',
+      description: 'Meeting location has been cleared.',
+    });
+  }, []);
   
   // Fetch product data from API
   useEffect(() => {
@@ -106,7 +160,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
   const handleContactSeller = () => {
     // Implement contact seller functionality
-    console.log(`Contacting seller for product: ${product.title}`);
+    console.log(`Contacting seller for product: ${product?.title}`);
   };
 
   return (
@@ -177,6 +231,117 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             </div>
           </div>
         </div>
+      </div>
+      
+      {/* Meeting Location Map */}
+      <div className="mt-12">
+        <h2 className="mb-4 text-2xl font-bold">Meeting Location</h2>
+        <div className="rounded-lg border overflow-hidden">
+          {!isLoaded ? (
+            <div className="flex items-center justify-center h-[400px] bg-gray-100">
+              <div className="text-center">
+                <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
+                <p className="text-lg">Loading map...</p>
+              </div>
+            </div>
+          ) : loadError ? (
+            <div className="flex items-center justify-center h-[400px] bg-gray-100">
+              <p className="text-red-500">Error loading Google Maps</p>
+            </div>
+          ) : (
+            <div className="relative">
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={meetingLocation || defaultCenter}
+                zoom={14}
+                onClick={onMapClick}
+                onLoad={onMapLoad}
+                options={{
+                  streetViewControl: false,
+                  mapTypeControl: false,
+                  fullscreenControl: true,
+                }}
+              >
+                {meetingLocation && (
+                  <>
+                    {/* Main marker */}
+                    <Marker
+                      position={meetingLocation}
+                      animation={google.maps.Animation.DROP}
+                      icon={{
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                          </svg>
+                        `),
+                        anchor: new google.maps.Point(20, 40),
+                        scaledSize: new google.maps.Size(40, 40)
+                      }}
+                    />
+                    
+                    {/* Pulsating circle effect */}
+                    <Marker
+                      position={meetingLocation}
+                      icon={{
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 12,
+                        fillColor: '#3B82F6',
+                        fillOpacity: 0.3,
+                        strokeWeight: 2,
+                        strokeColor: '#3B82F6',
+                        strokeOpacity: 0.5,
+                      }}
+                    />
+                  </>
+                )}
+              </GoogleMap>
+              
+              <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
+                {isBuyer ? (
+                  <div className="bg-white p-3 rounded-lg shadow-md">
+                    <p className="text-sm mb-2">
+                      {meetingLocation ? 'You have marked a meeting location' : 'Click on the map to mark a meeting location'}
+                    </p>
+                    {meetingLocation && (
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={handleResetLocation}
+                      >
+                        Reset Location
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-white p-3 rounded-lg shadow-md">
+                    <p className="text-sm">
+                      {meetingLocation ? 'Buyer has marked a meeting location' : 'Buyer has not marked a meeting location yet'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {meetingLocation && (
+          <div className="mt-4 p-4 bg-muted rounded-lg">
+            <div className="flex items-start gap-2">
+              <MapPin className="h-5 w-5 text-primary mt-0.5" />
+              <div>
+                <h3 className="font-medium">Meeting Point</h3>
+                <p className="text-sm text-muted-foreground">
+                  Latitude: {meetingLocation.lat.toFixed(6)}, Longitude: {meetingLocation.lng.toFixed(6)}
+                </p>
+                <p className="text-sm mt-1">
+                  This location has been marked as the meeting point for the transaction.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Product Description and Details Tabs */}
