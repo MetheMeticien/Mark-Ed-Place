@@ -54,3 +54,11 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
 
+@router.get("/user/{user_id}", response_model=schemas.UserRead)
+def get_user_by_id(user_id: str, db: Session = Depends(get_db)):
+    """Get a user by their ID"""
+    user = crud.get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+

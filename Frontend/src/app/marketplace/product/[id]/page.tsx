@@ -1,52 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ROUTES } from '@/config/config';
 import { ArrowLeft, ShoppingCart, Heart } from 'lucide-react';
+import { productApi, Product } from '@/lib/product-api';
+import { toast } from '@/components/ui/use-toast';
+// Fallback image for products without images
+const FALLBACK_IMAGE = 'https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image';
 
-// Mock data for products (same as in marketplace page)
-const MOCK_PRODUCTS = [
-  {
-    id: '1',
-    title: 'Introduction to Calculus',
-    description: 'A comprehensive guide to calculus fundamentals. This textbook covers limits, derivatives, integrals, and applications of calculus in various fields. Perfect for undergraduate students and self-learners.',
-    price: 25.99,
-    seller: 'Math Guru',
-    sellerId: 'user123',
-    category: 'Books',
-    condition: 'Like New',
-    university: 'IUT',
-    location: 'Campus Library',
-    postedDate: '2025-05-01',
-    image: 'https://placehold.co/600x400/e2e8f0/1e293b?text=Calculus+Book'
-  },
-  {
-    id: '2',
-    title: 'Physics Lab Equipment',
-    description: 'Essential tools for physics experiments. This kit includes a digital multimeter, oscilloscope, various sensors, and other components needed for conducting physics experiments. Ideal for physics students and hobbyists.',
-    price: 149.99,
-    seller: 'Science Supplies',
-    sellerId: 'user456',
-    category: 'Equipment',
-    condition: 'Good',
-    university: 'Dhaka University',
-    location: 'Science Building',
-    postedDate: '2025-04-28',
-    image: 'https://placehold.co/600x400/e2e8f0/1e293b?text=Lab+Equipment'
-  },
-  // Other products from the marketplace page...
-];
+// Format date to a readable format
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
 
 export default function ProductPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   
-  // Find the product based on the ID from the URL
-  const product = MOCK_PRODUCTS.find(p => p.id === params.id);
+  // Fetch product data from API
+  useEffect(() => {
+    const fetchProductData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await productApi.getProduct(params.id);
+        
+        if (response.error) {
+          throw new Error(response.error.message);
+        }
+        
+        if (response.data) {
+          setProduct(response.data);
+          
+          // Fetch related products
+          const allProductsResponse = await productApi.getProducts();
+          if (allProductsResponse.data) {
+            const related = allProductsResponse.data
+              .filter(p => p.id !== params.id && p.category === response.data?.category)
+              .slice(0, 4);
+            setRelatedProducts(related);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load product details. Please try again later.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProductData();
+  }, [params.id]);
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="container flex h-[70vh] items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
+          <p className="text-lg">Loading product details...</p>
+        </div>
+      </div>
+    );
+  }
   
   // If product not found, show error
   if (!product) {
@@ -74,7 +106,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
   const handleContactSeller = () => {
     // Implement contact seller functionality
-    console.log(`Contacting seller ${product.seller}`);
+    console.log(`Contacting seller for product: ${product.title}`);
   };
 
   return (
@@ -93,7 +125,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         {/* Product Image */}
         <div className="overflow-hidden rounded-lg border">
           <img
-            src={product.image}
+            src={product.image && product.image.length > 0 ? product.image[0] : FALLBACK_IMAGE}
             alt={product.title}
             className="h-full w-full object-cover"
           />
@@ -119,12 +151,13 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             </Button>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2 mt-6">
+            <h3 className="text-lg font-semibold">Product Information</h3>
             <p><span className="font-semibold">Condition:</span> {product.condition}</p>
             <p><span className="font-semibold">Category:</span> {product.category}</p>
             <p><span className="font-semibold">Location:</span> {product.location}</p>
-            <p><span className="font-semibold">Posted:</span> {product.postedDate}</p>
-            <p><span className="font-semibold">University:</span> {product.university}</p>
+            <p><span className="font-semibold">Stock:</span> {product.stock} available</p>
+            <p><span className="font-semibold">Posted:</span> {product.created_at ? formatDate(product.created_at) : 'N/A'}</p>
           </div>
           
           <div className="space-y-2">
@@ -132,7 +165,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <div className="flex items-center gap-4">
               <div className="h-10 w-10 rounded-full bg-muted"></div>
               <div>
-                <p className="font-medium">{product.seller}</p>
+                <p className="font-medium">University ID: {product.university_id || 'N/A'}</p>
                 <Button 
                   variant="link" 
                   className="h-auto p-0 text-sm"
@@ -163,8 +196,14 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <li><span className="font-medium">Category:</span> {product.category}</li>
             <li><span className="font-medium">Condition:</span> {product.condition}</li>
             <li><span className="font-medium">Location:</span> {product.location}</li>
-            <li><span className="font-medium">Seller:</span> {product.seller}</li>
-            <li><span className="font-medium">Posted Date:</span> {product.postedDate}</li>
+            <li><span className="font-medium">University ID:</span> {product.university_id}</li>
+            <li><span className="font-medium">Visibility:</span> {product.visibility}</li>
+            <li><span className="font-medium">Stock:</span> {product.stock}</li>
+            <li><span className="font-medium">Rating:</span> {product.avg_rating ? `${product.avg_rating} (${product.num_of_ratings} reviews)` : 'No ratings yet'}</li>
+            <li><span className="font-medium">Posted Date:</span> {product.created_at ? formatDate(product.created_at) : 'N/A'}</li>
+            {product.updated_at && product.updated_at !== product.created_at && (
+              <li><span className="font-medium">Last Updated:</span> {formatDate(product.updated_at)}</li>
+            )}
           </ul>
         </TabsContent>
         <TabsContent value="reviews" className="mt-4 rounded-lg border p-6">
@@ -176,14 +215,15 @@ export default function ProductPage({ params }: { params: { id: string } }) {
       {/* Related Products */}
       <section className="mt-12">
         <h2 className="mb-6 text-2xl font-bold">Related Products</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {MOCK_PRODUCTS.filter(p => p.id !== params.id && p.category === product.category)
-            .slice(0, 4)
-            .map(relatedProduct => (
+        {relatedProducts.length === 0 ? (
+          <p className="text-muted-foreground">No related products found.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {relatedProducts.map(relatedProduct => (
               <Card key={relatedProduct.id} className="overflow-hidden">
                 <div className="aspect-video w-full overflow-hidden">
                   <img
-                    src={relatedProduct.image}
+                    src={relatedProduct.image && relatedProduct.image.length > 0 ? relatedProduct.image[0] : FALLBACK_IMAGE}
                     alt={relatedProduct.title}
                     className="h-full w-full object-cover"
                   />
@@ -201,7 +241,8 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 </CardContent>
               </Card>
             ))}
-        </div>
+          </div>
+        )}
       </section>
     </div>
   );
