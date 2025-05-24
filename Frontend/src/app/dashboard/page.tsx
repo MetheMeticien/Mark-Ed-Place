@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RecentSales } from '@/components/dashboard/recent-sales';
 import { Overview } from '@/components/dashboard/overview';
+import { UniversityManagement } from '@/components/dashboard/university-management';
 
 export default function DashboardPage() {
   return (
@@ -20,6 +21,7 @@ export default function DashboardPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="universities">Universities</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -152,6 +154,10 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        
+        <TabsContent value="universities" className="space-y-4">
+          <UniversityManagement />
         </TabsContent>
       </Tabs>
     </div>

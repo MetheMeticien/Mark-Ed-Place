@@ -43,6 +43,7 @@ export const ROUTES = {
 export const ROLES = {
   ADMIN: 'admin',
   USER: 'normal',
+  MODERATOR: 'moderator',
 } as const;
 
 export type UserRole = typeof ROLES[keyof typeof ROLES];
