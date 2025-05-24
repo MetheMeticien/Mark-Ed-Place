@@ -25,11 +25,27 @@ import { VALIDATION } from '@/config/config';
 
 const formSchema = z
   .object({
-    name: z.string().min(
+    first_name: z.string().min(
       VALIDATION.NAME.MIN_LENGTH,
       VALIDATION.NAME.MESSAGE
     ),
+    last_name: z.string().min(
+      VALIDATION.NAME.MIN_LENGTH,
+      VALIDATION.NAME.MESSAGE
+    ),
+    username: z.string().min(
+      3,
+      'Username must be at least 3 characters'
+    ).max(
+      30,
+      'Username must be less than 30 characters'
+    ).regex(
+      /^[a-zA-Z0-9_-]+$/,
+      'Username can only contain letters, numbers, underscores, and hyphens'
+    ),
     email: z.string().email(VALIDATION.EMAIL.MESSAGE),
+    phone_no: z.string().optional(),
+    gender: z.string().optional(),
     password: z.string().min(
       VALIDATION.PASSWORD.MIN_LENGTH,
       VALIDATION.PASSWORD.MESSAGE
@@ -50,8 +66,12 @@ export default function SignupPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
+      first_name: '',
+      last_name: '',
+      username: '',
       email: '',
+      phone_no: '',
+      gender: '',
       password: '',
       confirmPassword: '',
     },
@@ -95,15 +115,53 @@ export default function SignupPage() {
             <div className="space-y-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="first_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>First Name</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="John Doe"
+                        placeholder="John"
                         type="text"
-                        autoComplete="name"
+                        autoComplete="given-name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="last_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Doe"
+                        type="text"
+                        autoComplete="family-name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="johndoe"
+                        type="text"
+                        autoComplete="username"
                         {...field}
                       />
                     </FormControl>
@@ -165,6 +223,48 @@ export default function SignupPage() {
                         autoComplete="new-password"
                         {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone_no"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="+1234567890"
+                        type="tel"
+                        autoComplete="tel"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gender (Optional)</FormLabel>
+                    <FormControl>
+                      <select 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                      >
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                      </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

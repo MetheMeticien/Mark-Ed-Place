@@ -1,7 +1,11 @@
 export interface User {
   id: string;
-  name: string;
+  username: string;
   email: string;
+  first_name: string;
+  last_name: string;
+  phone_no?: string;
+  gender?: string;
   role?: string;
   image?: string;
   createdAt?: string;
@@ -14,7 +18,11 @@ export interface LoginRequest {
 }
 
 export interface SignupRequest extends LoginRequest {
-  name: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  phone_no?: string;
+  gender?: string;
   confirmPassword: string;
 }
 

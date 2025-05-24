@@ -6,3 +6,7 @@
 /env.production.local
 __pycache__
 config.py
+.env
+env/
+__pycache__
+*.pyc

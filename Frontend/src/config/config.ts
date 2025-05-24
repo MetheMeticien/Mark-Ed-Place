@@ -8,6 +8,7 @@ export const API_CONFIG = {
       LOGOUT: '/auth/logout',
       REFRESH: '/auth/refresh',
       ME: '/auth/me',
+      TOKEN: '/auth/token',
     },
     USERS: {
       PROFILE: '/users/me',
@@ -59,5 +60,11 @@ export const VALIDATION = {
     MIN_LENGTH: 2,
     MAX_LENGTH: 50,
     MESSAGE: 'Name must be between 2 and 50 characters',
+  },
+  USERNAME: {
+    MIN_LENGTH: 3,
+    MAX_LENGTH: 30,
+    REGEX: /^[a-zA-Z0-9_-]+$/,
+    MESSAGE: 'Username must be between 3 and 30 characters and can only contain letters, numbers, underscores, and hyphens',
   },
 } as const;
