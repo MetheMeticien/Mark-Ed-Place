@@ -91,4 +91,4 @@ class Rag:
 
 if __name__ == "__main__":
     rag = Rag()
-    print(rag.retrieve_all_queried_products("nigga"))
+    print(rag.retrieve_all_queried_products("lollipop"))

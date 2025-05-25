@@ -7,6 +7,7 @@ from features.products.routes import router as product_router
 from features.products.university_routes import router as university_router
 from features.products.order_routes import router as order_router
 from features.realtimeChat.routes import router as chat_router
+from features.moderator.routes import router as moderator_router
 from features.products.meetup_routes import router as meetup_router
 
 try:
@@ -18,9 +19,14 @@ except Exception as e:
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:3000",
+    "http://192.168.15.248:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,3 +40,4 @@ app.include_router(university_router)
 app.include_router(order_router)
 app.include_router(chat_router)
 app.include_router(meetup_router)
+app.include_router(moderator_router)
