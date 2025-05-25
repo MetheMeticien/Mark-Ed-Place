@@ -44,7 +44,7 @@ export function UniversityManagement() {
   const [universities, setUniversities] = useState<University[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAddingUniversity, setIsAddingUniversity] = useState(false);
-  const [newUniversity, setNewUniversity] = useState({ name: '', email: '' });
+  const [newUniversity, setNewUniversity] = useState({ name: '', email: '', latitude: 23.66, longitude: 23.66 });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Fetch universities from the API
@@ -56,7 +56,10 @@ export function UniversityManagement() {
         throw new Error('Failed to fetch universities');
       }
       const data = await response.json();
+
       setUniversities(data);
+      
+      
     } catch (error) {
       console.error('Error fetching universities:', error);
       toast({
@@ -83,6 +86,10 @@ export function UniversityManagement() {
     setIsAddingUniversity(true);
     try {
       const token = localStorage.getItem('access_token');
+
+      newUniversity.latitude = 23.66;
+      newUniversity.longitude = 23.66;
+      console.log(newUniversity);
       const response = await fetch(`${API_CONFIG.BASE_URL}/universities`, {
         method: 'POST',
         headers: {
@@ -98,7 +105,7 @@ export function UniversityManagement() {
 
       const addedUniversity = await response.json();
       setUniversities([...universities, addedUniversity]);
-      setNewUniversity({ name: '', email: '' });
+      setNewUniversity({ name: '', email: '', latitude: 23.66, longitude: 23.66 });
       setIsDialogOpen(false);
       
       toast({
