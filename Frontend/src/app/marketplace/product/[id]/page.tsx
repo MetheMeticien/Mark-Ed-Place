@@ -46,7 +46,10 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   
   // Google Maps related states
   const [meetingLocation, setMeetingLocation] = useState<google.maps.LatLngLiteral | null>(null);
+  const [pendingMeetup, setPendingMeetup] = useState<any | null>(null); // For seller: pending meetup object
   const [isBuyer, setIsBuyer] = useState(true); // Hard-coded for now - true means current user is buyer
+  const [meetupAccepted, setMeetupAccepted] = useState(false); // For seller: if accepted, show confirmation
+  const [universities, setUniversities] = useState<any[]>([]); // Store universities data
   const mapRef = useRef<google.maps.Map | null>(null);
   
   // Load Google Maps API
@@ -56,20 +59,44 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   });
   
   // Google Maps click handler - defined at the top level
-  const onMapClick = useCallback((event: google.maps.MapMouseEvent) => {
-    if (!isBuyer || !event.latLng) return; // Only buyers can set meeting location
-    
+  const onMapClick = useCallback(async (event: google.maps.MapMouseEvent) => {
+    if (!isBuyer || !event.latLng || !product) return; // Only buyers can set meeting location
+
     const newLocation = {
       lat: event.latLng.lat(),
       lng: event.latLng.lng()
     };
     setMeetingLocation(newLocation);
-    
-    toast({
-      title: 'Meeting Location Set',
-      description: 'You have marked a location for meetup with the seller.',
-    });
-  }, [isBuyer]);
+
+    // POST to /meetups/ to create a meetup proposal
+    try {
+      // TODO: Replace with actual user info
+      const buyer_id = 'CURRENT_BUYER_ID';
+      const seller_id = product.seller_id;
+      const res = await fetch('http://localhost:8000/meetups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
+        body: JSON.stringify({
+          product_id: product.id,
+          latitude: newLocation.lat,
+          longitude: newLocation.lng,
+          seller_id,
+        }),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to create meetup proposal');
+      toast({
+        title: 'Meeting Location Set',
+        description: 'You have marked a location for meetup with the seller.',
+      });
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: e.message || 'Failed to create meetup proposal',
+        variant: 'destructive',
+      });
+    }
+  }, [isBuyer, product]);
   
   // Save map reference when the map loads - defined at the top level
   const onMapLoad = useCallback((map: google.maps.Map) => {
@@ -91,14 +118,14 @@ export default function ProductPage({ params }: { params: { id: string } }) {
       try {
         setIsLoading(true);
         const response = await productApi.getProduct(params.id);
-        
+
         if (response.error) {
           throw new Error(response.error.message);
         }
-        
+
         if (response.data) {
           setProduct(response.data);
-          
+
           // Fetch related products
           const allProductsResponse = await productApi.getProducts();
           if (allProductsResponse.data) {
@@ -119,9 +146,60 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         setIsLoading(false);
       }
     };
-    
+
     fetchProductData();
   }, [params.id]);
+
+  // For seller: fetch pending meetup proposals for this product
+  useEffect(() => {
+    const fetchPendingMeetup = async () => {
+      if (!product || isBuyer) return;
+      try {
+        const res = await fetch(`/meetups/product/${product.id}`, {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const meetups = await res.json();
+        // Find pending meetup for this seller
+        // TODO: Replace with actual user info
+        const seller_id = 'CURRENT_SELLER_ID';
+        const pending = meetups.find((m: any) => m.status === 'pending' && m.seller_id === seller_id);
+        if (pending) {
+          setPendingMeetup(pending);
+        } else {
+          setPendingMeetup(null);
+        }
+      } catch {
+        setPendingMeetup(null);
+      }
+    };
+    fetchPendingMeetup();
+
+    
+  }, [product, isBuyer]);
+
+  // Fetch universities data
+  useEffect(() => {
+    const fetchUniversities = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/universities/');
+        if (!response.ok) {
+          throw new Error('Failed to fetch universities');
+        }
+        const data = await response.json();
+        setUniversities(data);
+      } catch (error) {
+        console.error('Error fetching universities:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load universities data.',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    fetchUniversities();
+  }, []);
   
   // Show loading state
   if (isLoading) {
@@ -262,7 +340,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
           </div>
         </div>
       </div>
-      
+
       {/* Meeting Location Map */}
       <div className="mt-12">
         <h2 className="mb-4 text-2xl font-bold">Meeting Location</h2>
@@ -282,100 +360,122 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <div className="relative">
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
-                center={meetingLocation || defaultCenter}
-                zoom={14}
-                onClick={onMapClick}
+                center={(() => {
+                  if (isBuyer && meetingLocation) return meetingLocation;
+                  if (!isBuyer && pendingMeetup) return { lat: pendingMeetup.latitude, lng: pendingMeetup.longitude };
+                  if (product && product.university_id && universities) {
+                    const university = universities.find((u: any) => u.id === product.university_id);
+                    if (university) {
+                      return { lat: university.latitude, lng: university.longitude };
+                    }
+                  }
+                  return defaultCenter;
+                })()}
+                zoom={15}
+                onClick={isBuyer ? onMapClick : undefined}
                 onLoad={onMapLoad}
-                options={{
-                  streetViewControl: false,
-                  mapTypeControl: false,
-                  fullscreenControl: true,
-                }}
               >
-                {meetingLocation && (
-                  <>
-                    {/* Main marker */}
-                    <Marker
-                      position={meetingLocation}
-                      animation={google.maps.Animation.DROP}
-                      icon={{
-                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                          </svg>
-                        `),
-                        anchor: new google.maps.Point(20, 40),
-                        scaledSize: new google.maps.Size(40, 40)
-                      }}
-                    />
-                    
-                    {/* Pulsating circle effect */}
-                    <Marker
-                      position={meetingLocation}
-                      icon={{
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 12,
-                        fillColor: '#3B82F6',
-                        fillOpacity: 0.3,
-                        strokeWeight: 2,
-                        strokeColor: '#3B82F6',
-                        strokeOpacity: 0.5,
-                      }}
-                    />
-                  </>
+                {isBuyer && meetingLocation && (
+                  <Marker
+                    position={meetingLocation}
+                    icon={{
+                      url: '/marker.svg',
+                      scaledSize: isLoaded ? new google.maps.Size(40, 40) : undefined,
+                      anchor: isLoaded ? new google.maps.Point(20, 40) : undefined,
+                    }}
+                    animation={google.maps.Animation.DROP}
+                  />
+                )}
+                {!isBuyer && pendingMeetup && (
+                  <Marker
+                    position={{ lat: pendingMeetup.latitude, lng: pendingMeetup.longitude }}
+                    icon={{
+                      url: '/marker.svg',
+                      scaledSize: isLoaded ? new google.maps.Size(40, 40) : undefined,
+                      anchor: isLoaded ? new google.maps.Point(20, 40) : undefined,
+                    }}
+                    animation={google.maps.Animation.DROP}
+                  />
                 )}
               </GoogleMap>
-              
-              <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
-                {isBuyer ? (
-                  <div className="bg-white p-3 rounded-lg shadow-md">
-                    <p className="text-sm mb-2">
-                      {meetingLocation ? 'You have marked a meeting location' : 'Click on the map to mark a meeting location'}
+              {/* Buyer: Show coordinates and reset button */}
+              {isBuyer && meetingLocation && (
+                <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
+                  <Button variant="outline" onClick={handleResetLocation}>
+                    Reset Location
+                  </Button>
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Latitude: {meetingLocation.lat.toFixed(6)}, Longitude: {meetingLocation.lng.toFixed(6)}
                     </p>
-                    {meetingLocation && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        className="w-full"
-                        onClick={handleResetLocation}
-                      >
-                        Reset Location
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-white p-3 rounded-lg shadow-md">
-                    <p className="text-sm">
-                      {meetingLocation ? 'Buyer has marked a meeting location' : 'Buyer has not marked a meeting location yet'}
+                    <p className="text-sm mt-1">
+                      This location has been marked as the meeting point for the transaction.
                     </p>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+              {/* Seller: Show Accept/Reject if pending meetup exists */}
+              {!isBuyer && pendingMeetup && !meetupAccepted && (
+                <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
+                  <Button
+                    variant="default"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`/api/meetups/${pendingMeetup.id}/accept`, {
+                          method: 'PUT',
+                          credentials: 'include',
+                        });
+                        if (!res.ok) throw new Error('Failed to accept meetup');
+                        setMeetupAccepted(true);
+                        setPendingMeetup(null);
+                        toast({ title: 'Meetup accepted', description: 'You have set up a meeting with the buyer for this product.' });
+                      } catch (e: any) {
+                        toast({ title: 'Error', description: e.message || 'Failed to accept meetup', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`/api/meetups/${pendingMeetup.id}/reject`, {
+                          method: 'PUT',
+                          credentials: 'include',
+                        });
+                        if (!res.ok) throw new Error('Failed to reject meetup');
+                        setPendingMeetup(null);
+                        toast({ title: 'Meetup rejected', description: 'You have rejected the meeting proposal.' });
+                      } catch (e: any) {
+                        toast({ title: 'Error', description: e.message || 'Failed to reject meetup', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    Reject
+                  </Button>
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Latitude: {pendingMeetup.latitude.toFixed(6)}, Longitude: {pendingMeetup.longitude.toFixed(6)}
+                    </p>
+                    <p className="text-sm mt-1">
+                      This location has been proposed as a meeting point by the buyer.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {/* Seller: Show confirmation if accepted */}
+              {!isBuyer && meetupAccepted && (
+                <div className="absolute bottom-4 right-4 z-10">
+                  <p className="text-green-600 font-semibold">You've set up a meeting with the seller for this product.</p>
+                </div>
+              )}
             </div>
           )}
         </div>
-        
-        {meetingLocation && (
-          <div className="mt-4 p-4 bg-muted rounded-lg">
-            <div className="flex items-start gap-2">
-              <MapPin className="h-5 w-5 text-primary mt-0.5" />
-              <div>
-                <h3 className="font-medium">Meeting Point</h3>
-                <p className="text-sm text-muted-foreground">
-                  Latitude: {meetingLocation.lat.toFixed(6)}, Longitude: {meetingLocation.lng.toFixed(6)}
-                </p>
-                <p className="text-sm mt-1">
-                  This location has been marked as the meeting point for the transaction.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-      
-      {/* Product Description and Details Tabs */}
-      <Tabs defaultValue="description" className="mt-12">
+
+      <Tabs>
         <TabsList>
           <TabsTrigger value="description">Description</TabsTrigger>
           <TabsTrigger value="details">Details</TabsTrigger>
@@ -406,7 +506,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
           <p className="text-muted-foreground">No reviews yet.</p>
         </TabsContent>
       </Tabs>
-      
+
       {/* Related Products */}
       <section className="mt-12">
         <h2 className="mb-6 text-2xl font-bold">Related Products</h2>

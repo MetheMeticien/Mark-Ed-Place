@@ -45,3 +45,7 @@ export function handleApiError(error: unknown): { message: string; statusCode: n
 export function isUnauthorizedError(error: unknown): boolean {
   return error instanceof ApiErrorHandler && error.statusCode === 401;
 }
+
+export function isApiError(error: unknown): error is ApiErrorHandler {
+  return error instanceof ApiErrorHandler;
+}
