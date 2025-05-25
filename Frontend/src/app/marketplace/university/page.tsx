@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ImageCarousel } from '@/components/ui/image-carousel';
 import { ROUTES } from '@/config/config';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuthContext } from '@/components/providers/auth-provider';
@@ -181,11 +182,11 @@ export default function UniversityMarketplacePage() {
               {filteredProducts.map(product => (
                 <Link href={`${ROUTES.PRODUCT}/${product.id}`} key={product.id}>
                   <Card className="h-full overflow-hidden transition-all hover:shadow-md">
-                    <div className="aspect-video w-full overflow-hidden">
-                      <img
-                        src={product.image || FALLBACK_IMAGE}
-                        alt={product.title}
-                        className="h-full w-full object-cover transition-transform hover:scale-105"
+                    <div className="aspect-video w-full">
+                      <ImageCarousel 
+                        images={Array.isArray(product.image) ? product.image : [product.image || FALLBACK_IMAGE]} 
+                        fallbackImage={FALLBACK_IMAGE}
+                        className="group-hover:opacity-90 transition-opacity"
                       />
                     </div>
                     <CardContent className="p-4">
