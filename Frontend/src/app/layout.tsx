@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { CartProvider } from '@/components/providers/cart-provider';
+import ChatBot from '@/components/ChatBot';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,6 +32,7 @@ export default function RootLayout({
             <CartProvider>
               {children}
               <Toaster />
+              <ChatBot />
             </CartProvider>
           </AuthProvider>
         </ThemeProvider>

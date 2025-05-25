@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import sys
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 # Add the root directory to Python path to import AI_features
 from HandleChromaDB import HandleChromaDB
@@ -18,6 +19,19 @@ app = FastAPI(
     title="MARK-ED-PLACE RAG Backend",
     description="Backend API for product search, price estimation, and Q&A using RAG",
     version="1.0.0"
+)
+
+CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize the components
@@ -70,6 +84,7 @@ async def ask_question(request: QuestionRequest):
     """
     try:
         response = rag.ask_question(request.question)
+        print(response)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
